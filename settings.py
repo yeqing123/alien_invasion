@@ -18,7 +18,7 @@ class Settings:
         self.bullet_allow = 3
 
         # 外星人设置
-        self.alien_drop_speed = 40
+        self.alien_drop_speed = 20
         # 设置得分
         self.alien_points = 50
         

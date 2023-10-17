@@ -16,6 +16,10 @@ class Scoreboard:
         self.font = pygame.font.SysFont(None, 48)
         self.text_color = (30, 30, 30)
         # 初始化游戏状态信息的图像
+        self.prep_images()
+
+    def prep_images(self):
+        """将所有的状态信息渲染为图像"""
         self.prep_score()
         self.prep_high_score()
         self.prep_level()
@@ -72,7 +76,7 @@ class Scoreboard:
             self.prep_high_score()
 
     def show_score(self):
-        """将状态信息显示在屏幕上"""
+        """将所有的状态信息都显示在屏幕上"""
         self.screen.blit(self.score_image, self.score_rect)
         self.screen.blit(self.high_score_image, self.high_score_rect)
         self.screen.blit(self.level_image, self.level_rect)
