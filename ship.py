@@ -1,6 +1,8 @@
 import pygame
 from pygame.sprite import Sprite
 
+from ship_bullet import ShipBullet
+
 class Ship(Sprite):
     """管理飞船的类"""
     
@@ -8,6 +10,7 @@ class Ship(Sprite):
         """初始化飞船并设置其初始位置"""
         super().__init__()
         self.screen = ai_game.screen
+        self.ai_game = ai_game
         self.screen_rect = ai_game.screen.get_rect()
         self.settings = ai_game.settings
 
@@ -33,6 +36,13 @@ class Ship(Sprite):
         self.rect.midbottom = self.screen_rect.midbottom
         # 不要忘记将self.x也重置，因为它才是负责计算飞船的位置
         self.x = float(self.rect.x)
+
+    def fire_bullet(self):
+        """飞船发射子弹"""
+        if len(self.ai_game.ship_bullets) < self.settings.bullet_allow:
+            new_bullet = ShipBullet(self.ai_game)
+            self.ai_game.ship_bullets.add(new_bullet)
+
 
     def update(self):
         """根据移动标志，调整飞船位置"""

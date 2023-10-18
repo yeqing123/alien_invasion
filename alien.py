@@ -1,6 +1,8 @@
 import pygame
 from pygame.sprite import Sprite
-from settings import Settings
+
+from alien_bullet import AlienBullet
+
 
 class Alien(Sprite):
     """表示单个外星人的类"""
@@ -10,6 +12,7 @@ class Alien(Sprite):
         super().__init__()
         self.settings = ai_game.settings
         self.screen = ai_game.screen
+        self.ai_game = ai_game
 
         # 加载外星人图像并设置其rect属性
         self.image = pygame.image.load('images/alien.bmp')
@@ -21,6 +24,12 @@ class Alien(Sprite):
 
         # 存储外星人的精确水平位置
         self.x = float(self.rect.x)
+
+    def fire_bullet(self):
+        """外星人发射子弹"""
+        if len(self.ai_game.alien_bullets) > 0:
+            new_bullet = AlienBullet(self.ai_game, self)
+            self.ai_game.alien_bullets.add(new_bullet)
 
     def check_edges(self):
         """判断外星人是否到达了屏幕边缘"""
