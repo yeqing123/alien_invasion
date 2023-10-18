@@ -27,9 +27,8 @@ class Alien(Sprite):
 
     def fire_bullet(self):
         """外星人发射子弹"""
-        if len(self.ai_game.alien_bullets) > 0:
-            new_bullet = AlienBullet(self.ai_game, self)
-            self.ai_game.alien_bullets.add(new_bullet)
+        new_bullet = AlienBullet(self.ai_game, self)
+        self.ai_game.alien_bullets.add(new_bullet)
 
     def check_edges(self):
         """判断外星人是否到达了屏幕边缘"""

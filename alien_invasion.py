@@ -8,8 +8,6 @@ from pathlib import Path
 from settings import Settings
 from game_stats import GameStats
 from ship import Ship
-from ship_bullet import ShipBullet
-from alien_bullet import AlienBullet
 from alien import Alien
 from button import Button
 from scoreboard import Scoreboard
@@ -196,7 +194,8 @@ class AlienInvasion:
     def _start_new_level(self):
         """将游戏提升一个新的等级"""
         # 删除现有子弹，并创建一支新的外星舰队
-        self.bullets.empty()
+        self.ship_bullets.empty()
+        self.alien_bullets.empty()
         self._create_fleet()
         # 加快游戏节奏
         self.settings.increase_speed()
@@ -239,9 +238,13 @@ class AlienInvasion:
 
     def _alien_fire_bulle(self):
         """外星人发射子弹"""
-        index = random.randint(0, len(self.aliens) - 1)
-        alien = self.aliens.sprites()[index]
-        alien.fire_bullet()
+        if len(self.alien_bullets) == 0:
+            number = 0
+            while number < self.settings.bullet_allow:
+                index = random.randint(0, len(self.aliens) - 1)
+                alien = self.aliens.sprites()[index]
+                alien.fire_bullet()
+                number += 1
 
     def _update_aliens(self):
         """更新所有外星人的位置，并对其相关事件做出响应"""

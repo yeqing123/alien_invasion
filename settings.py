@@ -12,10 +12,13 @@ class Settings:
         self.ship_limit = 3
 
         # 子弹设置
-        self.bullet_width = 3
-        self.bullet_height = 15
+        self.ship_bullet_width = 3
+        self.ship_bullet_height = 15
         self.ship_bullet_color = (60, 60, 60)
+
         self.alien_bullet_color = (255, 0, 0)
+        self.alien_bullet_radius = 4.5
+
         self.bullet_allow = 3
 
         # 外星人设置
