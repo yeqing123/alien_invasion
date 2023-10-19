@@ -12,6 +12,7 @@ from alien import Alien
 from button import Button
 from scoreboard import Scoreboard
 from game_music import GameMusic
+from game_background import GameBackground
 
 class AlienInvasion:
     """管理游戏资源和行为的类"""
@@ -29,6 +30,7 @@ class AlienInvasion:
         self.stats = GameStats(self)
         self.sb = Scoreboard(self)
         self.music = GameMusic()
+        self.game_bg = GameBackground(self)
 
         self.ship = Ship(self)
         self.ship_bullets = pygame.sprite.Group()
@@ -157,7 +159,7 @@ class AlienInvasion:
         alien_width, alien_height = alien.rect.size
 
         current_x, current_y = alien_width, alien_height
-        while current_y < (self.settings.screen_height - 6 * alien_height):
+        while current_y < (self.settings.screen_height - 7 * alien_height):
             while current_x < (self.settings.screen_width - 2 * alien_width):
                 self._create_alien(current_x, current_y)
                 current_x += 2 * alien_width
@@ -193,7 +195,6 @@ class AlienInvasion:
         # 如果舰队全部被消灭，就将游戏递增一个新的等级
         if not self.aliens:
             self._start_new_level()
-
 
     def _start_new_level(self):
         """将游戏提升一个新的等级"""
@@ -261,7 +262,7 @@ class AlienInvasion:
         
     def _update_screen(self):
         """更新屏幕上的图像"""
-        self.screen.fill(self.settings.bg_color)
+        self.game_bg.blitme()
         self.aliens.draw(self.screen)
         for bullet in self.ship_bullets.sprites():
             bullet.draw_bullet()

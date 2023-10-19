@@ -10,9 +10,9 @@ class ShipBullet(Sprite):
         self.screen = ai_game.screen
         self.settings = ai_game.settings
 
-        # 在(0, 0)处创建一个表示子弹的矩形，再设置正确的位置
-        self.rect = pygame.Rect(0, 0, self.settings.ship_bullet_width,
-                                self.settings.ship_bullet_height)
+        # 加载一个字典图片，生成一个image对象
+        self.image = pygame.image.load('images/1 (3).png')
+        self.rect = self.image.get_rect()
         self.rect.midtop = ai_game.ship.rect.midtop    
         # 设置为浮点数类型
         self.y = float(self.rect.y)
@@ -26,5 +26,4 @@ class ShipBullet(Sprite):
     
     def draw_bullet(self):
         """在屏幕上绘制子弹"""
-        pygame.draw.rect(
-            self.screen, self.settings.ship_bullet_color, self.rect)
+        self.screen.blit(self.image, self.rect)
