@@ -20,7 +20,7 @@ class ShipBullet(Sprite):
     def update(self):
         """向上移动子弹"""
         # 更新飞船的子弹的准确位置
-        self.y -= self.settings.bullet_speed
+        self.y -= self.settings.ship_bullet_speed
         # 更新表示子弹的rect的位置
         self.rect.y = self.y
     

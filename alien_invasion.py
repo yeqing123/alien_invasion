@@ -258,11 +258,11 @@ class AlienInvasion:
     def _update_screen(self):
         """更新屏幕上的图像"""
         self.screen.fill(self.settings.bg_color)
+        self.aliens.draw(self.screen)
         for bullet in self.ship_bullets.sprites():
             bullet.draw_bullet()
         for bullet in self.alien_bullets.sprites():
             bullet.draw_bullet()
-        self.aliens.draw(self.screen)
         self.ship.blitme()
         self.sb.show_score()
         # 如果游戏处于非活动状态，就绘制Play按钮

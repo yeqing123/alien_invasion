@@ -1,7 +1,7 @@
 import pygame
 from pygame.sprite import Sprite
 
-from ship_bullet import ShipBullet
+from bullets.ship_bullet import ShipBullet
 
 class Ship(Sprite):
     """管理飞船的类"""

@@ -1,7 +1,7 @@
 import pygame
 from pygame.sprite import Sprite
 
-from alien_bullet import AlienBullet
+from bullets.alien_bullet import AlienBullet
 
 
 class Alien(Sprite):
