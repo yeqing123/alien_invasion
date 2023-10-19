@@ -11,6 +11,7 @@ from ship import Ship
 from alien import Alien
 from button import Button
 from scoreboard import Scoreboard
+from game_music import GameMusic
 
 class AlienInvasion:
     """管理游戏资源和行为的类"""
@@ -27,6 +28,7 @@ class AlienInvasion:
         # 初始化游戏所需的各类资源
         self.stats = GameStats(self)
         self.sb = Scoreboard(self)
+        self.music = GameMusic()
 
         self.ship = Ship(self)
         self.ship_bullets = pygame.sprite.Group()
@@ -90,6 +92,8 @@ class AlienInvasion:
         # 创建一支外星舰队，并将飞船放在屏幕底部的中央
         self._create_fleet()
         self.ship.ship_center()
+        # 开始播放背景音乐
+        self.music.play_music()
 
         # 游戏开始后隐藏光标
         pygame.mouse.set_visible(False)
