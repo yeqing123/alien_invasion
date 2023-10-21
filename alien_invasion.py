@@ -11,8 +11,8 @@ from ship import Ship
 from alien import Alien
 from button import Button
 from scoreboard import Scoreboard
-from game_music import GameMusic
-from game_background import GameBackground
+from sounds_player import SoundsPlayer
+from game_bg_image import GameBgImage
 
 class AlienInvasion:
     """管理游戏资源和行为的类"""
@@ -28,9 +28,10 @@ class AlienInvasion:
 
         # 初始化游戏所需的各类资源
         self.stats = GameStats(self)
+        # MusicPlayer要在Scoreboard类之前创建，因为后者的定义中会用到前者的实例
+        self.player = SoundsPlayer()
         self.sb = Scoreboard(self)
-        self.music = GameMusic()
-        self.game_bg = GameBackground(self)
+        self.bg_image = GameBgImage(self)
 
         self.ship = Ship(self)
         self.ship_bullets = pygame.sprite.Group()
@@ -52,6 +53,7 @@ class AlienInvasion:
             self._check_events()
 
             if self.game_active:
+                self.bg_image.update()
                 self.ship.update()
                 self._update_bullets()
                 self._update_aliens()
@@ -95,7 +97,7 @@ class AlienInvasion:
         self._create_fleet()
         self.ship.ship_center()
         # 开始播放背景音乐
-        self.music.play_music()
+        self.player.play('bg_music', -1, 0.1)
 
         # 游戏开始后隐藏光标
         pygame.mouse.set_visible(False)
@@ -130,7 +132,6 @@ class AlienInvasion:
         elif event.key == pygame.K_LEFT:
             self.ship.moving_left = False
 
-    
     def _update_bullets(self):
         """更新所有子弹的位置，并删除已飞出屏幕顶部的子弹"""
         # 更新子弹的位置
@@ -192,6 +193,8 @@ class AlienInvasion:
                 self.stats.score += self.settings.alien_points * len(aliens)
                 self.sb.prep_score()
                 self.sb.check_high_score()
+                # 播放外星人中弹的音效
+                self.player.play('alien_explode', 0, 1)
         # 如果舰队全部被消灭，就将游戏递增一个新的等级
         if not self.aliens:
             self._start_new_level()
@@ -262,7 +265,7 @@ class AlienInvasion:
         
     def _update_screen(self):
         """更新屏幕上的图像"""
-        self.game_bg.blitme()
+        self.bg_image.blitme()
         self.aliens.draw(self.screen)
         for bullet in self.ship_bullets.sprites():
             bullet.draw_bullet()

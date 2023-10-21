@@ -13,6 +13,7 @@ class Ship(Sprite):
         self.ai_game = ai_game
         self.screen_rect = ai_game.screen.get_rect()
         self.settings = ai_game.settings
+        self.player = ai_game.player
 
         # 飞船移动标志（刚开始不移动）
         self.moving_right = False
@@ -42,6 +43,7 @@ class Ship(Sprite):
         if len(self.ai_game.ship_bullets) < self.settings.bullet_allow:
             new_bullet = ShipBullet(self.ai_game)
             self.ai_game.ship_bullets.add(new_bullet)
+            self.player.play('fire_bullet', 0, 1)
 
 
     def update(self):

@@ -7,6 +7,7 @@ class Settings:
         self.screen_width = 800
         self.screen_height = 1000
         self.bg_color = (230, 230, 230)
+        self.bg_speed = 1.5
         
         # 飞船的设置
         self.ship_limit = 3
