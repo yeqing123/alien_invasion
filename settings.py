@@ -4,7 +4,7 @@ class Settings:
     def __init__(self):
         """初始化游戏的静态设置"""        
         # 屏幕的设置
-        self.screen_width = 800
+        self.screen_width = 720
         self.screen_height = 1000
         self.bg_color = (230, 230, 230)
         self.bg_speed = 1.5

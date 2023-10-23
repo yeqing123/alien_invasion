@@ -12,6 +12,7 @@ class Scoreboard:
         self.stats = ai_game.stats
         self.settings = ai_game.settings
 
+        self.ships = pygame.sprite.Group()
         # 设置显示得分的字体
         self.font = pygame.font.SysFont(None, 48)
         self.text_color = (30, 30, 30)
@@ -62,11 +63,11 @@ class Scoreboard:
     def prep_ships(self):
         """显示余下多少艘飞船"""
         # 将所有余下的飞船存放在编组中
-        self.ships = pygame.sprite.Group()
+        
         for ship_number in range(self.stats.ship_left):
             ship = Ship(self.ai_game)
             ship.rect.top = 10
-            ship.rect.left = ship_number * ship.rect.width + 10
+            ship.rect.left = ship_number * ship.rect.width + 20
             self.ships.add(ship)
 
     def check_high_score(self):

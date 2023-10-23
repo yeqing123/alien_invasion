@@ -49,11 +49,9 @@ class SoundsPlayer:
             # 播放音乐
             channel.play(sound, loops)
           
-    def stop(self, name):
+    def stop(self):
         """停止播放音乐"""
-        music = self.sounds_dictionary.get(name)
-        if music:
-            pygame.mixer.stop()
+        pygame.mixer.stop()
 
     def set_volume(self, name, volume):
         """调节指定音乐的音量"""
