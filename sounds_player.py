@@ -12,7 +12,7 @@ class SoundsPlayer:
         self.files_path = {
             'bg_music': 'musics/CONTINUE.ogg', 
             'fire_bullet': 'musics/fire_bullet.mp3',
-            'alien_explode': 'musics/alien_explode.wav'
+            'explode': 'musics/alien_explode.wav'
             }
         
         # 用一个字典保存加载后生成的Sound对象（以文件名为键，以对应的Sound对象为值）

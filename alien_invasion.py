@@ -4,6 +4,7 @@ import pygame
 import random
 import threading
 from pathlib import Path
+from time import sleep
 
 from settings import Settings
 from game_stats import GameStats
@@ -31,6 +32,7 @@ class AlienInvasion:
         self.stats = GameStats(self)
         # SoundsPlayer要在Scoreboard类之前创建，因为后者的定义中会用到前者的实例
         self.player = SoundsPlayer()
+        self.ship = Ship(self)
         self.sb = Scoreboard(self)
         self.bg_image = GameBgImage(self)
 
@@ -38,6 +40,9 @@ class AlienInvasion:
         self.ship_bullets = pygame.sprite.Group()
         self.alien_bullets = pygame.sprite.Group()
         self.aliens = pygame.sprite.Group()
+
+        # 设置一个定时器，该定时器一旦启动每隔三秒就执行一次self._ship_hit()方法
+        self.timer = threading.Timer(3, self._ship_hit)
         
         # 在初始化时创建一支外星舰队
         self._create_fleet()
@@ -45,7 +50,10 @@ class AlienInvasion:
         # 创建Play按钮
         self.play_button = Button(self, 'Play')
         
-        # 设置游戏是否启动
+        # 飞船是否已被击毁
+        self.ship_distroy = False
+
+        # 游戏是否启动
         self.game_active = False
 
     def run_game(self):
@@ -99,9 +107,7 @@ class AlienInvasion:
 
         # 创建一支外星舰队
         self._create_fleet()
-        # 创建一个飞船，并将其加入到Scoreboard类的飞船编组中，由该类负责统一管理
-        self.ship = Ship(self)
-        self.sb.ships.add(self.ship)
+      
         # 将飞船放置在屏幕底部的中央
         self.ship.ship_center()
         # 开始播放背景音乐
@@ -129,7 +135,8 @@ class AlienInvasion:
         elif event.key == pygame.K_LEFT:
             self.ship.moving_left = True
         elif event.key == pygame.K_SPACE:
-            self.ship.fire_bullet()
+            if not self.ship_distroy:
+                self.ship.fire_bullet()
         elif event.key == pygame.K_q:
             self._close_game()
         
@@ -203,7 +210,7 @@ class AlienInvasion:
                 self.sb.check_high_score()
                 for alien in aliens:
                     # 播放外星人中弹的音效
-                    self.player.play('alien_explode', 0, 1)
+                    self.player.play('explode', 0, 1)
                     self.explosion.set_effect(alien.rect.x, alien.rect.y)
 
         # 如果舰队全部被消灭，就将游戏递增一个新的等级
@@ -224,28 +231,42 @@ class AlienInvasion:
 
     def _check_ship_hit(self):
         """检查飞船是否被击中（与外星人发生碰撞或有外星人到达屏幕底部），并做出响应"""
-        # 设置一个定时器，定时器一旦开始每隔三秒就执行一次self._ship_hit()方法
-        self.timer = threading.Timer(3, self._ship_hit)
         # 判断是否有外星人到达了屏幕底部
         for alien in self.aliens.sprites():
             if alien.rect.bottom >= self.screen.get_rect().height:
+                self.ship_distroy = True
+                sleep(2)
                 self._ship_hit()
                 # 因为已经重启了一局，所以for循环无需再继续
                 break
 
-        # 判断子弹是否击中的飞船
-        collisions = pygame.sprite.groupcollide(
-            self.sb.ships, self.alien_bullets, True, True)
-        if collisions:
-            self.player.play('alien_explode', 0, 1)
-            self.explosion.set_effect(self.ship.rect.x, self.ship.rect.y)
-            # 定时器开始计时
-            self.timer.start()
-            print("飞船被击中，计时器开始计时！")
+        # 获取与飞船发生碰撞的子弹
+        collided_bullet = pygame.sprite.spritecollideany(
+            self.ship, self.alien_bullets)
         
-        # 判断飞船是否与外星人发生了碰撞
-        if pygame.sprite.spritecollideany(self.ship, self.aliens):
-            self._ship_hit()
+        # 获取去飞船发生碰撞的外星人
+        collided_alien = pygame.sprite.spritecollideany(
+            self.ship, self.aliens)
+        
+        # 当飞船与子弹碰撞时，做出相应的操作
+        if collided_bullet and not self.ship_distroy:
+            self.alien_bullets.remove(collided_bullet)
+            self._ship_destroyed()
+
+        # 当飞船与外星人碰撞时，做出相应的操作
+        if collided_alien and not self.ship_distroy:
+            self.aliens.remove(collided_alien)
+            self._ship_destroyed()
+
+    def _ship_destroyed(self):
+        """响应飞船被击毁"""
+        # 播放声音
+        self.player.play('explode', 0, 1)
+        # 设置爆炸图片显示的正确位置
+        self.explosion.set_effect(self.ship.rect.x, self.ship.rect.y)
+        self.ship_distroy = True
+        # 定时器启动
+        self.timer.start()
 
     def _ship_hit(self):
         """当飞船被击中时，做出响应"""
@@ -256,17 +277,15 @@ class AlienInvasion:
         if self.stats.ship_left > 0:
             # 启用一搜备用飞船
             self.stats.ship_left -= 1
-            self.ship = Ship(self)
             # 刷新剩余飞船的图像，然后开启新的一局
             self.sb.ships.empty()          
-            self.sb.prep_ships()
-            # 还是加入编组，由Scoreboard类统一管理
-            self.sb.ships.add(self.ship)
             self.aliens.empty()
             self.ship_bullets.empty()
             self.alien_bullets.empty()  
+            self.sb.prep_ships()
             self.ship.ship_center()
             self._create_fleet()
+            self.ship_distroy = False
         else:
             self.player.stop()  # 背景音乐停止播放
             self.game_active = False
@@ -276,7 +295,9 @@ class AlienInvasion:
         """外星人发射子弹"""
         if len(self.alien_bullets) == 0:
             number = 0
-            while number < self.settings.bullet_allow:
+            # 每次循环时都要判断一下aliens是否为空，
+            # 因为在游戏运行时_ship_hit()函数随时都可能被调用，从而清空aliens
+            while number < self.settings.bullet_allow and len(self.aliens) > 0:
                 index = random.randint(0, len(self.aliens) - 1)
                 alien = self.aliens.sprites()[index]
                 alien.fire_bullet()
@@ -294,6 +315,8 @@ class AlienInvasion:
     def _update_screen(self):
         """更新屏幕上的图像"""
         self.bg_image.blitme()
+        if not self.ship_distroy:
+            self.ship.blitme()
         self.aliens.draw(self.screen)
         self.explosion.blitme()
         for bullet in self.ship_bullets.sprites():
