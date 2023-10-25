@@ -40,9 +40,6 @@ class AlienInvasion:
         self.ship_bullets = pygame.sprite.Group()
         self.alien_bullets = pygame.sprite.Group()
         self.aliens = pygame.sprite.Group()
-
-        # 设置一个定时器，该定时器一旦启动每隔三秒就执行一次self._ship_hit()方法
-        self.timer = threading.Timer(3, self._ship_hit)
         
         # 在初始化时创建一支外星舰队
         self._create_fleet()
@@ -109,6 +106,7 @@ class AlienInvasion:
         self._create_fleet()
       
         # 将飞船放置在屏幕底部的中央
+        self.ship_distroy = False
         self.ship.ship_center()
         # 开始播放背景音乐
         self.player.play('bg_music', -1, 0.1)
@@ -265,13 +263,13 @@ class AlienInvasion:
         # 设置爆炸图片显示的正确位置
         self.explosion.set_effect(self.ship.rect.x, self.ship.rect.y)
         self.ship_distroy = True
+        # 设置多线程定时器，延迟三秒后将执行self._ship_hit()方法
+        self.timer = threading.Timer(3, self._ship_hit)
         # 定时器启动
         self.timer.start()
 
     def _ship_hit(self):
         """当飞船被击中时，做出响应"""
-        # 取消定时器，避免重复计时
-        self.timer.cancel()
         print("时间到，重整旗鼓！")
         # 如果还有备用飞船，开启新一局游戏，否则结束游戏
         if self.stats.ship_left > 0:
