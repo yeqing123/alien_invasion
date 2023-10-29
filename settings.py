@@ -39,9 +39,12 @@ class Settings:
         self.ship_speed = 2.5
         self.ship_bullet_speed = 5.5
         self.alien_bullet_speed = 1.5
+        self.boss_bullet_speed = 3.5
         self.alien_speed = 1.0
         # 设置外星人移动的方向，1表示向右，-1表示向左
         self.alien_direction = 1
+        # 设置外星boss的移动方向
+        self.boss_direction = 1
 
     def increase_speed(self):
         """增加动态设置的值，以加快游戏节奏"""
