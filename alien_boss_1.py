@@ -29,9 +29,6 @@ class AlienBoss_1:
 
         # 自定义事件
         self.FIRE_BULLET_EVENT = pygame.USEREVENT + 2
-        self.set_event = False
-
-        self.luck = threading.Lock()
 
     def _set_fire_bullet_event(self):
         """设置boss的开火事件，并使之事件每次触发的延迟时间"""
@@ -42,10 +39,8 @@ class AlienBoss_1:
             self.y += 2.5
             self.rect.y = self.y
         else:
-            if not self.set_event:
-                # 定义一个定时器，每隔1000毫秒就触发一次事件
-                pygame.time.set_timer(self.FIRE_BULLET_EVENT, 1000)
-                self.set_event = True
+            # 定义一个定时器，每隔1000毫秒就触发一次事件
+            pygame.time.set_timer(self.FIRE_BULLET_EVENT, 1000)
 
             self._check_edegs()
             self.x += self.boss_speed * self.settings.boss_direction
@@ -79,8 +74,4 @@ class AlienBoss_1:
 
     def blitme(self):
         """在屏幕上绘制boss"""
-     #   if self.luck.acquire():
         self.screen.blit(self.image, self.rect)
-
-      
-      #      self.luck.release()

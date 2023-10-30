@@ -15,10 +15,10 @@ class DotBullet(Sprite):
         self.image = pygame.image.load('images/dot_bullet.png')
         self.rect = self.image.get_rect()
 
+        self._set_position(x_position, y_position)
+
         self.x = float(self.rect.x)
         self.y = float(self.rect.y)
-
-        self._set_position(x_position, y_position)
 
     def _set_position(self, x_position, y_position):
         """设置出现的坐标位置"""
