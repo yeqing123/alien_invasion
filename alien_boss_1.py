@@ -1,5 +1,7 @@
 import pygame
 
+from skimage import exposure, data, img_as_float
+
 from pygame.sprite import Group
 from bullets.bomb import Bomb
 from bullets.dot_bullet import DotBullet
@@ -13,8 +15,11 @@ class AlienBoss_1:
         self.screen = ai_game.screen
         self.settings = ai_game.settings
         self.screen_rect = self.screen.get_rect()
-        self.image = pygame.image.load("images/processed_img_plane_boss.png")
+        self.image = pygame.image.load("images/processed_processed_processed_img_plane_boss.png")
+        self.high_image = pygame.image.load("images/high_light_boss.png")
         self.rect = self.image.get_rect()
+        self.high_rect = self.high_image.get_rect()
+
         self.rect.midbottom = self.screen_rect.midtop
 
         self.dot_bullets = Group()
@@ -25,16 +30,17 @@ class AlienBoss_1:
 
         self.boss_speed = 1.5
         self.boss_drop_speed = 20
-        self.nose_down_distance = 200
-        self.nose_down_speed = 2.5
+        self.dive_distance = 200
+        self.dive_speed = 2.5
 
         # 自定义事件
         self.FIRE_BULLET_EVENT = pygame.USEREVENT + 2
         self.FIREFULL_EVENT = pygame.USEREVENT + 3
 
+        self.high_light = False
         self.allow_fire = False
-        self.nose_down = False
-        self.start_drop_bomb = False
+        self.begin_dive = False
+        self.begin_drop_bomb = False
 
     def _set_timer(self):
         """设置定时器"""
@@ -49,8 +55,8 @@ class AlienBoss_1:
             self._boss_appearing()
         elif not self.allow_fire:
             self._set_timer()
-        elif self.nose_down:
-            self._nose_down()
+        elif self.begin_dive:
+            self._dive()
             self.bombs.update()
         else:
             self._move_left_and_right()
@@ -60,27 +66,27 @@ class AlienBoss_1:
         self.y += 2.5
         self.rect.y = self.y
 
-    def _nose_down(self):
+    def _dive(self):
         """使Boss定时做俯冲动作"""
-        if not self.start_drop_bomb:
-            if self.nose_down_distance > 0:
+        if not self.begin_drop_bomb:
+            if self.dive_distance > 0:
                 print("俯冲开始！")
-                self.y += self.nose_down_speed
+                self.y += self.dive_speed
                 self.rect.y = self.y
-                self.nose_down_distance -= self.nose_down_speed
-            elif self.nose_down_distance <= 0:
+                self.dive_distance -= self.dive_speed
+            elif self.dive_distance <= 0:
                 print("投弹！")
                 self._drop_bomb()
-                self.start_drop_bomb = True
+                self.begin_drop_bomb = True
         else:
             print("回撤！")
-            if self.nose_down_distance < 200:
-                self.y -= self.nose_down_speed
+            if self.dive_distance < 200:
+                self.y -= self.dive_speed
                 self.rect.y = self.y
-                self.nose_down_distance += self.nose_down_speed
+                self.dive_distance += self.dive_speed
             else:
-                self.nose_down = False
-                self.start_drop_bomb = False
+                self.begin_dive = False
+                self.begin_drop_bomb = False
         
     def _move_left_and_right(self):
         """负责Boss常规的左右移动"""
@@ -112,6 +118,15 @@ class AlienBoss_1:
         self.dot_bullets.add(dot_bullet_1)
         self.dot_bullets.add(dot_bullet_2)
 
+    def boss_high_light(self):
+        """让Boss图片高亮，以表示它被击中了"""
+        self.high_rect.x = self.rect.x
+        self.high_rect.y = self.rect.y
+
     def blitme(self):
         """在屏幕上绘制boss"""
-        self.screen.blit(self.image, self.rect)
+        if self.high_light:
+            self.screen.blit(self.high_image, self.high_rect)
+            self.high_light = False
+        else:
+            self.screen.blit(self.image, self.rect)

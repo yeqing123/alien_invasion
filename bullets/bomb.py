@@ -12,7 +12,7 @@ class Bomb(Sprite):
         self.screen = ai_game.screen
         self.drop_speed = 4.5
 
-        self.image = pygame.image.load('images/processed_1_13.png')
+        self.image = pygame.image.load('images/nzd5 (2).png')
         self.rect = self.image.get_rect()
 
         self._set_position(position)

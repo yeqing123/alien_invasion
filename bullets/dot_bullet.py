@@ -12,7 +12,7 @@ class DotBullet(Sprite):
         self.screen = ai_game.screen
         self.flight_speed = 3.5
 
-        self.image = pygame.image.load('images/dot_bullet.png')
+        self.image = pygame.image.load('images/1_17.png')
         self.rect = self.image.get_rect()
 
         self._set_position(position)
