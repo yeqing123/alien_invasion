@@ -25,7 +25,7 @@ class Settings:
         # 外星人设置
         self.alien_drop_speed = 50
         # 设置得分
-        self.alien_points = 50
+        self.alien_points = 1
         
         # 以什么速度加快游戏的节奏
         self.speedup_scale = 1.1

@@ -2,7 +2,7 @@ import pygame
 
 from pygame.sprite import Sprite
 
-class DotBullet(Sprite):
+class Bomb(Sprite):
     """负责管理小圆点子弹"""
     
     def __init__(self, ai_game, position):
@@ -10,9 +10,9 @@ class DotBullet(Sprite):
         super().__init__()
         self.ai_game = ai_game
         self.screen = ai_game.screen
-        self.flight_speed = 3.5
+        self.drop_speed = 4.5
 
-        self.image = pygame.image.load('images/dot_bullet.png')
+        self.image = pygame.image.load('images/processed_1_13.png')
         self.rect = self.image.get_rect()
 
         self._set_position(position)
@@ -27,7 +27,7 @@ class DotBullet(Sprite):
 
     def update(self):
         """更新其位置"""
-        self.y += self.flight_speed
+        self.y += self.drop_speed
         self.rect.y = self.y
 
     def draw_bullet(self):

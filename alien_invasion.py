@@ -57,7 +57,7 @@ class AlienInvasion:
         self.game_active = False
 
         # 提示是否出现Boss
-        self.show_boss = False
+        self.show_boss = True
 
     def run_game(self):
         """开始游戏的主循环"""
@@ -90,10 +90,13 @@ class AlienInvasion:
             elif event.type == self.explosion.SHOW_IMAGE_EVENT:
                 # 事件触发说明爆炸延迟时间已到
                 self.explosion.show_image = False
-            elif (event.type == self.boss_1.FIRE_BULLET_EVENT and 
-                    self.show_boss):
-                self.boss_1.fire_bullets()
+            elif event.type == self.boss_1.FIRE_BULLET_EVENT and \
+                    self.show_boss:
                 self.boss_1.fire_dot_bullet()
+            elif event.type == self.boss_1.FIREFULL_EVENT and \
+                    self.show_boss:
+                print("触发了FIREFULL_EVENT！")
+                self.boss_1.nose_down = True
 
     def _check_play_button(self, mouse_pos):
         """在玩家点击Play按钮时开始游戏"""
@@ -162,7 +165,7 @@ class AlienInvasion:
         # 更新子弹的位置
         self.ship_bullets.update()
         self.alien_bullets.update()
-        self.boss_1.bullets.update()
+        self.boss_1.bombs.update()
         self.boss_1.dot_bullets.update()
         # 删除已消失的子弹
         for bullet in self.ship_bullets.copy():
@@ -171,9 +174,9 @@ class AlienInvasion:
         for bullet in self.alien_bullets.copy():
             if bullet.rect.top > self.screen.get_rect().bottom:
                 self.alien_bullets.remove(bullet)
-        for bullet in self.boss_1.bullets.sprites().copy():
+        for bullet in self.boss_1.bombs.sprites().copy():
             if bullet.rect.top > self.screen.get_rect().bottom:
-                self.boss_1.bullets.remove(bullet)
+                self.boss_1.bombs.remove(bullet)
         for bullet in self.boss_1.dot_bullets.sprites().copy():
             if bullet.rect.top > self.screen.get_rect().bottom:
                 self.boss_1.dot_bullets.remove(bullet)
@@ -234,6 +237,10 @@ class AlienInvasion:
         # 如果舰队全部被消灭，就将游戏递增一个新的等级
         if not self.aliens and not self.show_boss:
             self._start_new_level()
+
+    def _check_boss_bullet_collisitions(self):
+        """检查Boss是否被飞船发射的子弹击中"""
+        
 
     def _start_new_level(self):
         """将游戏提升一个新的等级"""
@@ -340,14 +347,12 @@ class AlienInvasion:
             self.ship.blitme()
         self.aliens.draw(self.screen)
         self.explosion.blitme()
-        for bullet in self.ship_bullets.sprites():
-            bullet.draw_bullet()
+        self.ship_bullets.draw(self.screen)
         for bullet in self.alien_bullets.sprites():
-            bullet.draw_bullet()  
-        for bullet in self.boss_1.bullets.sprites():
-            bullet.draw_bullet()  
-        for bullet in self.boss_1.dot_bullets.sprites():
-            bullet.draw_bullet()  
+            bullet.draw_bullet()
+        if self.boss_1.start_drop_bomb:
+            self.boss_1.bombs.draw(self.screen)
+        self.boss_1.dot_bullets.draw(self.screen)
       
         self.sb.ships.draw(self.screen)
         self.sb.show_score()
