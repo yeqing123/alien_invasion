@@ -5,6 +5,7 @@ import random
 import threading
 from pathlib import Path
 from time import sleep
+from random import randint
 
 from settings import Settings
 from game_stats import GameStats
@@ -95,7 +96,6 @@ class AlienInvasion:
                 self.boss_1.fire_dot_bullet()
             elif event.type == self.boss_1.FIREFULL_EVENT and \
                     self.show_boss:
-                print("触发了FIREFULL_EVENT！")
                 self.boss_1.begin_dive = True
 
     def _check_play_button(self, mouse_pos):
@@ -124,7 +124,7 @@ class AlienInvasion:
         self.ship_destroy = False
         self.ship.ship_center()
         # 开始播放背景音乐
-        self.player.play('bg_music', -1, 0.1)
+        self.player.play('bg_music_2', -1, 0.1)
 
         # 隐藏光标
         pygame.mouse.set_visible(False)
@@ -248,6 +248,28 @@ class AlienInvasion:
             self.boss_1.high_light = True
             self.boss_1.boss_high_light()
             self.ship_bullets.remove(collied_any)
+            self.boss_1.blood_volume -= 10
+            print(f"boss当前血量：{self.boss_1.blood_volume}")
+            self._check_boss_end()
+
+    def _check_boss_end(self):
+        """检测Boss血量耗尽而终结"""
+        
+        if self.boss_1.blood_volume == 0:
+            for number in range(5):
+                min_x = self.boss_1.rect.x
+                max_x = self.boss_1.rect.x + self.boss_1.rect.width
+                min_y = self.boss_1.rect.y
+                max_y = self.boss_1.rect.y + self.boss_1.rect.height
+                x = randint(min_x, max_x)
+                y = randint(min_y, max_y)
+                print(f"x = {x}, y = {y}")
+                self.explosion.set_effect(x
+                    , y)
+                self.player.play('boss_explode', 0, 0.5)
+              
+            
+            self.show_boss = False
 
         
     def _start_new_level(self):
@@ -262,7 +284,7 @@ class AlienInvasion:
         self.stats.level += 1
         self.sb.prep_level()
         
-        if self.stats.level == 2:
+        if self.stats.level == 2 and self.boss_1.blood_volume > 0:
             self.show_boss = True
 
     def _check_ship_hit(self):
@@ -296,7 +318,6 @@ class AlienInvasion:
 
     def _check_boss_bullet_hits_ship(self):
         """检查Boss的子弹命中飞船"""
-        print("碰撞检测！")
         # 检测与飞船发生碰撞的Boss子弹
         collided_bullet = pygame.sprite.spritecollideany(
             self.ship, self.boss_1.dot_bullets)
@@ -387,8 +408,8 @@ class AlienInvasion:
         # 如果游戏处于非活动状态，就绘制Play按钮
         if not self.game_active:
             self.play_button.draw_button()
-
-        self.boss_1.blitme()
+        if self.show_boss:
+            self.boss_1.blitme()
 
         # 显示窗口
         pygame.display.flip()

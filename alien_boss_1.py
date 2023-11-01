@@ -33,6 +33,9 @@ class AlienBoss_1:
         self.dive_distance = 200
         self.dive_speed = 2.5
 
+        # 定义Boss的血量
+        self.blood_volume = 100
+
         # 自定义事件
         self.FIRE_BULLET_EVENT = pygame.USEREVENT + 2
         self.FIREFULL_EVENT = pygame.USEREVENT + 3
@@ -70,16 +73,13 @@ class AlienBoss_1:
         """使Boss定时做俯冲动作"""
         if not self.begin_drop_bomb:
             if self.dive_distance > 0:
-                print("俯冲开始！")
                 self.y += self.dive_speed
                 self.rect.y = self.y
                 self.dive_distance -= self.dive_speed
             elif self.dive_distance <= 0:
-                print("投弹！")
                 self._drop_bomb()
                 self.begin_drop_bomb = True
         else:
-            print("回撤！")
             if self.dive_distance < 200:
                 self.y -= self.dive_speed
                 self.rect.y = self.y

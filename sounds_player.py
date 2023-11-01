@@ -10,9 +10,13 @@ class SoundsPlayer:
 
         # 所有需要加载的游戏音效的文件路径都在这里
         self.files_path = {
-            'bg_music': 'musics/CONTINUE.ogg', 
+            'bg_music_1': 'musics/CONTINUE.ogg', 
+            'bg_music_2': 'musics/bg_music(Level_1).mp3',
             'fire_bullet': 'musics/fire_bullet.mp3',
-            'explode': 'musics/alien_explode.wav'
+            'explode': 'musics/alien_explode.wav',
+            'boss_explode': 'musics/boss_explode.wav',
+            'dot_fire': 'musics/qhzd.ogg',
+            'drop_bomb': 'musics/drop_bomb.wav',
             }
         
         # 用一个字典保存加载后生成的Sound对象（以文件名为键，以对应的Sound对象为值）
