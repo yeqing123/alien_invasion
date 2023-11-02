@@ -70,7 +70,7 @@ class AlienInvasion:
                 self.ship.update()
                 self._update_bullets()
                 self._update_aliens()
-                if self.show_boss:
+                if self.show_boss and self.boss_1.blood_volume > 0:
                     self.boss_1.update()
 
             self._update_screen()   
@@ -243,34 +243,52 @@ class AlienInvasion:
         # 检测Boss是否与飞船的子弹发生了碰撞
         collied_any = pygame.sprite.spritecollideany(
             self.boss_1, self.ship_bullets)
+        
         # 如果碰撞了，就高亮Boss，并删除子弹
         if collied_any:
             self.boss_1.high_light = True
             self.boss_1.boss_high_light()
             self.ship_bullets.remove(collied_any)
+            # 每次Boss被击中都会掉血
             self.boss_1.blood_volume -= 10
-            print(f"boss当前血量：{self.boss_1.blood_volume}")
-            self._check_boss_end()
-
-    def _check_boss_end(self):
-        """检测Boss血量耗尽而终结"""
         
-        if self.boss_1.blood_volume == 0:
-            for number in range(5):
-                min_x = self.boss_1.rect.x
-                max_x = self.boss_1.rect.x + self.boss_1.rect.width
-                min_y = self.boss_1.rect.y
-                max_y = self.boss_1.rect.y + self.boss_1.rect.height
-                x = randint(min_x, max_x)
-                y = randint(min_y, max_y)
-                print(f"x = {x}, y = {y}")
-                self.explosion.set_effect(x
-                    , y)
-                self.player.play('boss_explode', 0, 0.5)
-              
-            
-            self.show_boss = False
+            # 每当Boss被子弹击中，都判断其血量是否已耗尽
+            if self.boss_1.blood_volume == 0:
+                self.number = 8
+                self._boss_end()
 
+
+    def _boss_end(self):
+        """以递归方式设置多线程定时器，制造Boss的连续爆炸效果"""
+        # 如果number小于等于0，则制造最大的一次爆炸效果后结束递归
+        if self.number <= 0:
+            # 加载新的爆炸图片，并设置其显示位置
+            self.explosion.load_image("images/big_explosion.png")
+            self.explosion.set_effect(
+                self.boss_1.rect.x + 50, self.boss_1.rect.y + 30, 1000)
+            # 播放爆炸音效
+            self.player.play('boss_explode', 0, 1)
+            self.show_boss = False
+            # 使用多线程设置定时器，在1.5秒后恢复默认的爆炸效果
+            timer = threading.Timer(1.5, self.explosion.reset)
+            timer.start()
+            return
+        
+        self.number -= 1
+        # 设置随机坐标范围的最小值
+        min_x = self.boss_1.rect.x + self.explosion.rect.width
+        min_y = self.boss_1.rect.y + self.explosion.rect.height
+        # 设置随机坐标范围的最大值
+        max_x = self.boss_1.rect.x + self.boss_1.rect.width - \
+            self.explosion.rect.width
+        max_y = self.boss_1.rect.y + self.boss_1.rect.height - \
+            self.explosion.rect.height
+        # 以随机方式设置连续爆炸的位置
+        self.explosion.set_effect(randint(min_x, max_x), randint(min_y, max_y))
+        self.player.play('boss_explode', 0, 0.5)
+        # 创建多线程定时器，每隔0.25秒执行一次_boss_end()函数，直到number小于等于0为止
+        timer = threading.Timer(0.25, self._boss_end)
+        timer.start()
         
     def _start_new_level(self):
         """将游戏提升一个新的等级"""
@@ -395,7 +413,6 @@ class AlienInvasion:
         if not self.ship_destroy:
             self.ship.blitme()
         self.aliens.draw(self.screen)
-        self.explosion.blitme()
         self.ship_bullets.draw(self.screen)
         for bullet in self.alien_bullets.sprites():
             bullet.draw_bullet()
@@ -411,6 +428,7 @@ class AlienInvasion:
         if self.show_boss:
             self.boss_1.blitme()
 
+        self.explosion.blitme()
         # 显示窗口
         pygame.display.flip()
   
