@@ -1,3 +1,5 @@
+import pygame
+
 class Settings:
     """存储游戏《外星人入侵》中所有设置的类"""
 
@@ -19,11 +21,11 @@ class Settings:
 
         self.alien_bullet_color = (255, 0, 0)
         self.alien_bullet_radius = 4.5
-
-        self.bullet_allow = 3
+        # 允许连续开火次数的上限
+        self.bullet_allow = 10
 
         # 外星人设置
-        self.alien_drop_speed = 50
+        self.alien_drop_speed = 10
         # 设置得分
         self.alien_points = 1
         
@@ -31,6 +33,9 @@ class Settings:
         self.speedup_scale = 1.1
         # 以什么尺度提高得分
         self.score_scale = 1.5
+
+        # 设置自定义事件的序列(从0开始，每创建一个自定义事件都加1)
+        self.event_order = 0
 
         self.initialize_dynamic_settings()
 
@@ -51,5 +56,11 @@ class Settings:
         self.ship_speed *= self.speedup_scale
         self.ship_bullet_speed *= self.speedup_scale
         self.alien_speed *= self.speedup_scale
+        self.bullet_allow += 1
 
         self.alien_points = int(self.alien_points * self.score_scale)
+
+    def get_custom_events(self):
+        """创建一个新的自定义事件"""
+        self.event_order += 1
+        return pygame.USEREVENT + self.event_order

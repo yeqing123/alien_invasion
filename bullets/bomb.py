@@ -21,7 +21,7 @@ class Bomb(Sprite):
         self.y = float(self.rect.y)
 
     def _set_position(self, position):
-        """设置出现的坐标位置"""
+        """设置出现的坐标位置，position为包含一对坐标值的元组"""
         self.rect.centerx = position[0]
         self.rect.centery = position[1]
 

@@ -6,6 +6,7 @@ class ExplosionEffect:
     def __init__(self, ai_game):
         """初始化爆炸效果图的属性"""
         self.ai_game = ai_game
+        self.settings = ai_game.settings
         self.screen = ai_game.screen
 
         # 加载图片文件
@@ -15,7 +16,7 @@ class ExplosionEffect:
         self.show_image = False
 
         # 自定义事件
-        self.SHOW_IMAGE_EVENT = pygame.USEREVENT + 1
+        self.SHOW_IMAGE_EVENT = self.settings.get_custom_events()
 
     def load_image(self, filepath):
         """重新加载指定路径上的爆炸图片"""

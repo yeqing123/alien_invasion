@@ -15,6 +15,7 @@ class GameStats:
     def reset_stats(self):
         """重置游戏的状态信息"""
         self.ship_left = self.settings.ship_limit
+        # 设置游戏进展水平
         self.level = 1
         self.score = 0
 

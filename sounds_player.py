@@ -17,6 +17,7 @@ class SoundsPlayer:
             'boss_explode': 'musics/boss_explode.wav',
             'dot_fire': 'musics/qhzd.ogg',
             'drop_bomb': 'musics/drop_bomb.wav',
+            'won':'musics/zd_bgm.ogg'
             }
         
         # 用一个字典保存加载后生成的Sound对象（以文件名为键，以对应的Sound对象为值）
@@ -30,7 +31,7 @@ class SoundsPlayer:
         self._load_files()
 
     def _load_files(self):
-        """根据音乐文件的路径加载音乐"""
+        """加载属性字典files_path中保存的所有音频文件"""
         for name, path in self.files_path.items():
             try :
                 sound = pygame.mixer.Sound(path)
