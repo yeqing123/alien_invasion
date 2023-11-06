@@ -20,7 +20,7 @@ from game_bg_image import GameBgImage
 from explosion_effect import ExplosionEffect
 from alien_boss_1 import AlienBoss_1
 from victory_text import VictoryText
-from supply_packages.bullet_package import BulletPackage
+from supply_packages.missile_package import MissilePackage
 
 class AlienInvasion:
     """管理游戏资源和行为的类"""
@@ -150,8 +150,8 @@ class AlienInvasion:
 
         self.ship.turn_on_stealth_mode()
 
-        self.bullet_package = BulletPackage(self)
-        self.packages.add(self.bullet_package)
+        self.missile_package = MissilePackage(self)
+        self.packages.add(self.missile_package)
         self.show_package = True
 
     def _close_game(self):
@@ -210,26 +210,23 @@ class AlienInvasion:
                 if bullet.rect.top > self.screen.get_rect().bottom:
                     self.boss_1.ordinary_bullets.remove(bullet)
 
-    def _update_packages(self):
-        """更新屏幕上消失的补给包"""
-        # 更新所有补给包的位置
-        self.packages.update()
-        # 删除已经消失的补给包
-        for package in self.packages.sprites().copy():
-            if package.rect.top > self.screen_rect.bottom:
-                self.packages.remove(package)
 
-    def _check_package_ship_collisition(self):
+    def _check_package_ship_collisitions(self):
         """检测补给包与飞船发生碰撞，并做出响应"""
-        collided_sprite = pygame.sprite.spritecollideany(self.ship, self.packages, True)
-        if collided_sprite:
+        collided_package = pygame.sprite.spritecollideany(self.ship, self.packages)
+        if collided_package:
+            print("发生碰撞了！")
             self.player.play('enhance', 0, 1)
-            self._enhance_ship(collided_sprite)
+            self._enhance_ship(collided_package)
+            self.packages.remove(collided_package)
 
     def _enhance_ship(self, package):
-        if package.name == 'bullet_package':
-            
-
+        print("调用_enhance_ship()")
+        if package.name == 'missile_package':
+            print("OK!!!")
+            sched = BackgroundScheduler()
+            sched.add_job(self.ship.launch_missile, 'interval', seconds=3)
+            sched.start()
 
     def _create_alien(self, x_position, y_position):
         """创建一个外星人，并根据实参设置其位置"""
@@ -335,7 +332,7 @@ class AlienInvasion:
             self.boss_1.boss_high_light()
             self.ship_bullets.remove(collied_any)
             # 每次Boss被击中都会掉血
-            self.boss_1.blood_volume -= 10
+            self.boss_1.blood_volume -= 1
         
             # 每当Boss被子弹击中，都判断其血量是否已耗尽
             if self.boss_1.blood_volume == 0:
@@ -500,13 +497,24 @@ class AlienInvasion:
         if not self.ship.stealth_mode:
             self._check_ship_hit()
         
+    def _update_packages(self):
+        """更新屏幕上消失的补给包"""
+        # 更新所有补给包的位置
+        self.packages.update()
+        # 检测补给包是否与飞船发生碰撞
+        self._check_package_ship_collisitions()
+        # 删除已经消失的补给包
+        for package in self.packages.sprites().copy():
+            if package.rect.top > self.screen_rect.bottom:
+                self.packages.remove(package)
+
     def _update_screen(self):
         """更新屏幕上的图像"""
         self.bg_image.blitme()
-        if not self.ship_destroy:
-            self.ship.blitme()
         self.aliens.draw(self.screen)
         self.ship_bullets.draw(self.screen)
+        if not self.ship_destroy:
+            self.ship.blitme()
         for bullet in self.alien_bullets.sprites():
             bullet.draw_bullet()
         
@@ -517,8 +525,7 @@ class AlienInvasion:
             self.boss_1.blitme()
 
         self.explosion.blitme()
-        if self.show_package:
-            self.bullet_package.blitme()
+        self.packages.draw(self.screen)
         self.sb.ships.draw(self.screen)
         self.sb.show_score()
         # 如果游戏处于非活动状态，就绘制Play按钮

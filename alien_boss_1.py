@@ -1,8 +1,8 @@
 import pygame
 
 from pygame.sprite import Group
-from bullets.bomb import Bomb
-from bullets.boss_ordinary_bullet import OrdinaryBullet
+from bullets.alien.boss.bomb import Bomb
+from bullets.alien.boss.boss_ordinary_bullet import OrdinaryBullet
 
 class AlienBoss_1:
     """管理一号外星人boss的类"""

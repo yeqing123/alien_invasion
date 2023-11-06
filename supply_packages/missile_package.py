@@ -3,7 +3,7 @@ import pygame
 from random import randint
 from pygame.sprite import Sprite
 
-class BulletPackage(Sprite):
+class MissilePackage(Sprite):
     """创建并管理游戏中飞船补给包的类"""
 
     def __init__(self, ai_game):
@@ -26,7 +26,7 @@ class BulletPackage(Sprite):
         self.y = float(self.rect.y)
 
         # 设置一个名称
-        self.name = 'bullet_package'
+        self.name = 'missile_package'
 
     def update(self):
         """更新补给包的移动位置"""

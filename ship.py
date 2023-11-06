@@ -4,7 +4,8 @@ import datetime
 from pygame.sprite import Sprite
 from apscheduler.schedulers.background import BackgroundScheduler
 
-from bullets.ship_bullet import ShipBullet
+from bullets.ship.ship_bullet import ShipBullet
+from bullets.ship.ship_missile import ShipMissile
 
 class Ship(Sprite):
     """管理飞船的类"""
@@ -35,7 +36,6 @@ class Ship(Sprite):
         self.stealth_mode = False
         # 设置飞船是否显示
         self.ship_show = True
-        self.number = 0
 
     def blitme(self):
         """在指定位置绘制飞船"""
@@ -57,6 +57,25 @@ class Ship(Sprite):
             new_bullet = ShipBullet(self.ai_game)
             self.ai_game.ship_bullets.add(new_bullet)
             self.player.play('fire_bullet', 0, 1)
+
+    def launch_missile(self):
+        """"飞船发射导弹（一次同时发射左右两枚）"""
+        print("调用了launch_missile（）函数！")
+        # 只有当飞船移动时才发射导弹
+      #  if self.moving_left and self.moving_right:
+            # 设置左右两枚导弹的初始位置
+        x_left = self.rect.x - 10
+        y_left = self.rect.y
+        x_right = self.rect.x + self.rect.width + 10
+        y_right = self.rect.y
+        # 创建两枚导弹
+        left_missile = ShipMissile(self, 'left')
+        right_missile = ShipMissile(self,'right')
+        
+        # 将导弹加入到编组中
+        self.ai_game.ship_bullets.add(left_missile)
+        self.ai_game.ship_bullets.add(right_missile)
+          
 
     def update(self):
         """根据移动标志，调整飞船位置"""
