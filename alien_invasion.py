@@ -20,6 +20,7 @@ from game_bg_image import GameBgImage
 from explosion_effect import ExplosionEffect
 from alien_boss_1 import AlienBoss_1
 from victory_text import VictoryText
+from supply_packages.bullet_package import BulletPackage
 
 class AlienInvasion:
     """管理游戏资源和行为的类"""
@@ -47,6 +48,7 @@ class AlienInvasion:
         self.ship_bullets = pygame.sprite.Group()
         self.alien_bullets = pygame.sprite.Group()
         self.aliens = pygame.sprite.Group()
+        self.packages = pygame.sprite.Group()
         # 创建任务调度器
         self.scheduler = BackgroundScheduler()
         
@@ -63,7 +65,10 @@ class AlienInvasion:
         # 提示是否出现Boss
         self.show_boss = False
         # 提示是否胜利
-        self.won = False
+        self.victory = False
+
+        # 提示补给包是否已经出现
+        self.show_package = False
 
     def run_game(self):
         """开始游戏的主循环"""
@@ -75,6 +80,7 @@ class AlienInvasion:
                 self.ship.update()
                 self._update_bullets()
                 self._update_aliens()
+                self._update_packages()
                 if self.boss_1 and self.boss_1.blood_volume > 0:
                     self.boss_1.update()
 
@@ -144,6 +150,10 @@ class AlienInvasion:
 
         self.ship.turn_on_stealth_mode()
 
+        self.bullet_package = BulletPackage(self)
+        self.packages.add(self.bullet_package)
+        self.show_package = True
+
     def _close_game(self):
         """如果最高得分被刷新，则保存在文件中，然后退出游戏"""
         saved_high_score = self.stats.get_saved_high_score()
@@ -199,6 +209,27 @@ class AlienInvasion:
             for bullet in self.boss_1.ordinary_bullets.sprites().copy():
                 if bullet.rect.top > self.screen.get_rect().bottom:
                     self.boss_1.ordinary_bullets.remove(bullet)
+
+    def _update_packages(self):
+        """更新屏幕上消失的补给包"""
+        # 更新所有补给包的位置
+        self.packages.update()
+        # 删除已经消失的补给包
+        for package in self.packages.sprites().copy():
+            if package.rect.top > self.screen_rect.bottom:
+                self.packages.remove(package)
+
+    def _check_package_ship_collisition(self):
+        """检测补给包与飞船发生碰撞，并做出响应"""
+        collided_sprite = pygame.sprite.spritecollideany(self.ship, self.packages, True)
+        if collided_sprite:
+            self.player.play('enhance', 0, 1)
+            self._enhance_ship(collided_sprite)
+
+    def _enhance_ship(self, package):
+        if package.name == 'bullet_package':
+            
+
 
     def _create_alien(self, x_position, y_position):
         """创建一个外星人，并根据实参设置其位置"""
@@ -274,10 +305,12 @@ class AlienInvasion:
         self.stats.level += 1
         self.sb.prep_level()
         print(f"sublevel = {self.stats.level}")
-        # 当水平提升到2时，Boss出现
-        if self.stats.level == 2  :
+        # 当水平提升到2时，Boss出现。同时创建子弹包，用于强化飞船活力
+        if self.stats.level == 2:
             self.boss_1 = AlienBoss_1(self)
+            
             self.show_boss = True
+            self.show_package = True
 
     def _set_boss_explosions_range(self):
         """根据Boss所在为值，获得其连续爆炸的随机位置"""
@@ -353,9 +386,9 @@ class AlienInvasion:
 
     def _victory_effect(self):
         """每当打败Boss都会播放的胜利效果"""
-        self.won = True
+        self.victory = True
         self.player.stop()
-        self.player.play('won', -1, 1)
+        self.player.play('victory', -1, 1)
 
 
     def _check_ship_hit(self):
@@ -484,13 +517,15 @@ class AlienInvasion:
             self.boss_1.blitme()
 
         self.explosion.blitme()
+        if self.show_package:
+            self.bullet_package.blitme()
         self.sb.ships.draw(self.screen)
         self.sb.show_score()
         # 如果游戏处于非活动状态，就绘制Play按钮
         if not self.game_active:
             self.play_button.draw_button()
 
-        if self.won:
+        if self.victory:
             self.victory_text.blitme()
 
         # 显示窗口

@@ -37,6 +37,9 @@ class Settings:
         # 设置自定义事件的序列(从0开始，每创建一个自定义事件都加1)
         self.event_order = 0
 
+        # 设置补给包的移动速度
+        self.sp_speed = 1.0
+
         self.initialize_dynamic_settings()
 
     def initialize_dynamic_settings(self):
@@ -50,6 +53,8 @@ class Settings:
         self.alien_direction = 1
         # 设置外星boss的移动方向
         self.boss_direction = 1
+        # 设置补给包移动的方向
+        self.sp_direction = 1
 
     def increase_speed(self):
         """增加动态设置的值，以加快游戏节奏"""
