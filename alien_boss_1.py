@@ -1,7 +1,7 @@
 import pygame
 
 from pygame.sprite import Group
-from bullets.alien.boss.bomb import Bomb
+from bullets.alien.boss.boss_bomb import BossBomb
 from bullets.alien.boss.boss_ordinary_bullet import OrdinaryBullet
 
 class AlienBoss_1:
@@ -109,7 +109,7 @@ class AlienBoss_1:
         """发射子弹"""
         self.ai_game.player.play('drop_bomb', 0, 1)
         position = self.rect.midbottom
-        new_bomb = Bomb(self.ai_game, position)
+        new_bomb = BossBomb(self.ai_game, position)
         self.bombs.add(new_bomb)
 
     def fire_ordinary_bullet(self):

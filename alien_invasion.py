@@ -20,7 +20,7 @@ from game_bg_image import GameBgImage
 from explosion_effect import ExplosionEffect
 from alien_boss_1 import AlienBoss_1
 from victory_text import VictoryText
-from supply_packages.missile_package import MissilePackage
+from supply_package import SupplyPackage
 
 class AlienInvasion:
     """管理游戏资源和行为的类"""
@@ -150,8 +150,8 @@ class AlienInvasion:
 
         self.ship.turn_on_stealth_mode()
 
-        self.missile_package = MissilePackage(self)
-        self.packages.add(self.missile_package)
+        self.rocket_package = SupplyPackage(self, "images/rocket_package.png", 'rocket')
+        self.packages.add(self.rocket_package)
         self.show_package = True
 
     def _close_game(self):
@@ -161,7 +161,8 @@ class AlienInvasion:
             path = Path('high_score.json')
             contents = json.dumps(self.stats.high_score)
             path.write_text(contents)
-        
+
+        self.scheduler.shutdown()
         sys.exit()
 
     def _check_keydown_events(self, event):
@@ -222,11 +223,10 @@ class AlienInvasion:
 
     def _enhance_ship(self, package):
         print("调用_enhance_ship()")
-        if package.name == 'missile_package':
+        if package.type == 'rocket':
             print("OK!!!")
-            sched = BackgroundScheduler()
-            sched.add_job(self.ship.launch_missile, 'interval', seconds=3)
-            sched.start()
+            self.scheduler.add_job(self.ship.launch_missile, 'interval', seconds=3)
+            self.scheduler.start()
 
     def _create_alien(self, x_position, y_position):
         """创建一个外星人，并根据实参设置其位置"""

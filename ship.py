@@ -5,6 +5,7 @@ from pygame.sprite import Sprite
 from apscheduler.schedulers.background import BackgroundScheduler
 
 from bullets.ship.ship_bullet import ShipBullet
+from bullets.ship.ship_rocket import ShipRocket
 from bullets.ship.ship_missile import ShipMissile
 
 class Ship(Sprite):
@@ -58,24 +59,34 @@ class Ship(Sprite):
             self.ai_game.ship_bullets.add(new_bullet)
             self.player.play('fire_bullet', 0, 1)
 
-    def launch_missile(self):
-        """"飞船发射导弹（一次同时发射左右两枚）"""
-        print("调用了launch_missile（）函数！")
-        # 只有当飞船移动时才发射导弹
-      #  if self.moving_left and self.moving_right:
-            # 设置左右两枚导弹的初始位置
-        x_left = self.rect.x - 10
-        y_left = self.rect.y
-        x_right = self.rect.x + self.rect.width + 10
-        y_right = self.rect.y
-        # 创建两枚导弹
-        left_missile = ShipMissile(self, 'left')
-        right_missile = ShipMissile(self,'right')
+    def launch_rocket(self):
+        """"飞船发射火箭弹（一次同时发射左右两枚）"""
+        # 创建两枚火箭弹，并标明其位置
+        left_rocket = ShipRocket(self, 'left')
+        right_rocket = ShipRocket(self,'right')
         
-        # 将导弹加入到编组中
-        self.ai_game.ship_bullets.add(left_missile)
-        self.ai_game.ship_bullets.add(right_missile)
-          
+        # 将火箭弹加入到编组中
+        self.ai_game.ship_bullets.add(left_rocket)
+        self.ai_game.ship_bullets.add(right_rocket)
+
+    def launch_missile(self):
+        """飞船发射可以自动判断并跟踪最近外星人的导弹"""
+        target = self._check_nearest_enemy()
+        if target:
+            missile = ShipMissile(self.ai_game, target)
+            self.ai_game.ship_bullets.add(missile)
+
+    def _check_nearest_enemy(self):
+        """检测并返回距离屏幕底部最近的敌人"""
+        # min_distance = self.screen_rect.height
+        # nearest_alien = None
+        # for alien in self.ai_game.aliens.sprites():
+        #     distance = self.screen_rect.height - alien.rect.y
+        #     if distance < min_distance:
+        #         min_distance = distance
+        #         nearest_alien = alien
+
+        return self.ai_game.aliens.sprites().copy().pop()
 
     def update(self):
         """根据移动标志，调整飞船位置"""
@@ -99,6 +110,8 @@ class Ship(Sprite):
         # 添加任务并设置每隔0.1秒执行一次任务，并设置为多线程并发，最大线程数为3
         self.sched.add_job(
             self._ship_flash, 'interval', seconds=0.1, max_instances=3)
+        
+        # 隐身模式启动10秒后自动关闭
         # self.sched.add_job(
         #     self.turn_off_stealth_mode, 'interval', seconds=10, max_instances=3)
         self.sched.start()

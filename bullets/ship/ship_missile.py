@@ -1,52 +1,95 @@
 import pygame
 
 from pygame.sprite import Sprite
+from math import sqrt
+import math
 
 class ShipMissile(Sprite):
-    """负责管理飞船发射的炸弹"""
-    
-    def __init__(self, ship, direction):
+    """创建并管理可以追踪外星人的导弹的类"""
+
+    def __init__(self, ai_game, target):
         """初始化各类属性"""
         super().__init__()
-        self.ship = ship
-        self.flight_speed = 4.5
+        self.ai_game = ai_game
+        self.ship = self.ai_game.ship
+        self.settings = ai_game.settings
+        self.target = target
 
-        self.image = pygame.image.load('images/bullet4 (2).png')
+        self.image = pygame.image.load("images/rocket.png")
         self.rect = self.image.get_rect()
         self.rect.center = self.ship.rect.center
 
         self.x = float(self.rect.x)
         self.y = float(self.rect.y)
 
-        # 设置导弹在x轴上的运动方向，0表示在x轴上不移动，-1表示向左，1表示向右
-        self.x_direction = 0
-        # 设置导弹在x轴上的移动速度
-        self.x_move_speed = 1.0
-        # 设置在x轴上移动的距离(设立设置为15个像素)
-        self.x_distance = float(self.ship.rect.width / 2)
-        # 初始化x轴移动方向
-        self._set_direction(direction)
+        self.flight_speed = 3.5
 
-    def _set_direction(self, direction):
-        """
-        设置导弹在x轴上的移动方向，direction是一个字符串，
-        它的值应该是：‘left’或‘right’，
-        分别表示导弹在x轴上向左移动或向右移动，默认为空字符串表示不移动
-        """
-        if direction == 'left':
-            self.x_direction = -1
-        elif direction == 'right':
-            self.x_direction = 1
+        self.rotate_direction = 1
+        self.angle_scale = 0
+        self.number = 0
+        self.not_kown = 20
+
+    def _calculate_flight_path(self):
+        """计算导弹的飞行轨迹"""
+        # 获得导弹当前的位置
+        x_missile = self.rect.centerx
+        y_missile = self.rect.centery
+        # 获得目标当前的位置坐标
+        x_target = self.target.rect.centerx
+        y_target = self.target.rect.centery
+        # 获得导弹与目标分别在x,y轴上的距离
+        # 此处得出的结果x_distance有可能是负数，但是我们不用管它，因为在计算子弹移动时
+        # 加一个负数正好就表示减去x的值
+        x_distance = (x_missile - x_target)
+        y_distance = y_missile - y_target
+        # 根据勾股定律，得出导弹与目标之前的直线距离
+        a_square = pow(x_distance, 2)
+        b_square = pow(y_distance, 2)
+        # 如果x_distance是负数，计算其平方时因为负负得正，所以也不影响计算结果
+        c_square = a_square + b_square
+        linear_distance = sqrt(c_square)
+        # 计算出导弹分别在x,y轴上的移动速度
+        self.step_number = linear_distance / self.flight_speed
+        self.x_speed = float(x_distance / self.step_number)
+        self.y_speed = float(y_distance / self.step_number)
+
+        if x_distance > 0:
+            self.rotate_direction = 1
+        else:
+            self.rotate_direction = -1
+
+        self._caculate_flight_angle(x_distance, y_distance)
+
+    def _caculate_flight_angle(self, a, b):
+        """计算导弹的飞行角度"""
+        c = sqrt(pow(a, 2) + pow(b, 2))
+        self.angle = math.degrees(math.acos((a*a-b*b-c*c)/(-2*b*c)))
+        self.angle_scale = float(self.angle / self.step_number)
+        print(self.angle)
+        
+
+
+    def _rotate_missile(self):
+        """旋转导弹"""
+        if self.number < self.angle:
+            self.number += self.angle_scale
+        
+        self.image = pygame.image.load("images/rocket.png")
+        self.image = pygame.transform.rotate(self.image, self.number * self.rotate_direction)
+        core = (self.rect.centerx, self.rect.centery)
+        self.rect = self.image.get_rect(center=core)
 
     def update(self):
-        """更新其位置"""
-        # 现在x轴上移动设置好的距离，然后再在y轴上移动
-        if self.x_distance > 0:
-            print(self.x_direction)
-            self.x += self.flight_speed * self.x_direction
-            self.rect.x = self.x
-            self.x_distance -= self.flight_speed
-        else:
+        """更新导弹位置"""
+        self._calculate_flight_path()
+   #    self._rotate_missile()
+        if self.not_kown > 0:
             self.y -= self.flight_speed
-            self.rect.y = self.y
+            self.not_kown -= self.flight_speed
+            self.rect.centery = self.y
+        else:    
+            self.x -= self.x_speed
+            self.y -= self.y_speed
+            self.rect.centerx = self.x
+            self.rect.centery = self.y
 

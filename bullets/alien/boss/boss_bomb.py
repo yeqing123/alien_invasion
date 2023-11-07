@@ -2,8 +2,8 @@ import pygame
 
 from pygame.sprite import Sprite
 
-class Bomb(Sprite):
-    """负责管理小圆点子弹"""
+class BossBomb(Sprite):
+    """创建Boss发射的炸弹的类"""
     
     def __init__(self, ai_game, position):
         """初始化各类属性"""
