@@ -3,6 +3,7 @@ import datetime
 
 from pygame.sprite import Sprite
 from apscheduler.schedulers.background import BackgroundScheduler
+from random import randint
 
 from bullets.ship.ship_bullet import ShipBullet
 from bullets.ship.ship_rocket import ShipRocket
@@ -71,22 +72,17 @@ class Ship(Sprite):
 
     def launch_missile(self):
         """飞船发射可以自动判断并跟踪最近外星人的导弹"""
-        target = self._check_nearest_enemy()
-        if target:
-            missile = ShipMissile(self.ai_game, target)
-            self.ai_game.ship_bullets.add(missile)
-
-    def _check_nearest_enemy(self):
-        """检测并返回距离屏幕底部最近的敌人"""
-        # min_distance = self.screen_rect.height
-        # nearest_alien = None
-        # for alien in self.ai_game.aliens.sprites():
-        #     distance = self.screen_rect.height - alien.rect.y
-        #     if distance < min_distance:
-        #         min_distance = distance
-        #         nearest_alien = alien
-
-        return self.ai_game.aliens.sprites().copy().pop()
+        # 从外星舰队中随机的选择一个外星人作为射击目标
+        aliens = self.ai_game.aliens.sprites()
+        # randint(a, b)函数返回包含a,b两端的值，所以作为列表索引b端要减1
+        target = aliens[randint(0, len(aliens) - 1)]
+        
+        # 创建导弹
+        missile = ShipMissile(self.ai_game)
+        # 锁定目标
+        missile.lock_target(target)
+        # 加入飞船子弹编组
+        self.ai_game.ship_bullets.add(missile)
 
     def update(self):
         """根据移动标志，调整飞船位置"""

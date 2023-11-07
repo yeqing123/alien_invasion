@@ -472,7 +472,7 @@ class AlienInvasion:
         else:
             self.player.stop()  # 背景音乐停止播放
             self.game_active = False
-            pygame.mouse.set_visible(True)
+            pygame.mouse.set_visible(True)  
 
     def _alien_fire_bullet(self):
         """外星人发射子弹"""

@@ -38,7 +38,7 @@ class Settings:
         self.event_order = 0
 
         # 设置补给包的移动速度
-        self.sp_speed = 1.0
+        self.sp_speed = 1.5
 
         self.initialize_dynamic_settings()
 

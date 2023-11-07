@@ -16,9 +16,9 @@ class SupplyPackage(Sprite):
 
         self.image = pygame.image.load(filepath)
         self.rect = self.image.get_rect()
-        # 设置补给包出现的位置，x值是随机值
-        self.rect.midtop = self.screen_rect.midtop
-        # 随机获取补给包在屏幕中移动的距离
+        # 初始化补给包的位置
+        self.rect.bottom = self.screen_rect.top
+        # 初始化补给包的移动距离
         self.remove_distance = randint(0, self.settings.screen_width)
 
         self.x = float(self.rect.x)
@@ -37,9 +37,12 @@ class SupplyPackage(Sprite):
         self.rect.x = self.x
         self.rect.y = self.y
       
-        # 每更新一次位置就缩小移动距离，当距离小于等于0时，重新获取一个新的值
+        # 更新需要移动的距离
         self.remove_distance -= self.settings.sp_speed
+        #当距离缩小到小于或等于0时，重新获取一个新的值
         if self.remove_distance <= 0:
+            # 随机变换移动方向
+            self.settings.sp_direction *= -1
             self.remove_distance = randint(0, self.settings.screen_width)
 
     def _check_edge(self):
