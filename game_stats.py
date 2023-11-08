@@ -15,12 +15,15 @@ class GameStats:
     def reset_stats(self):
         """重置游戏的状态信息"""
         self.ship_left = self.settings.ship_limit
-        # 设置游戏进展水平
+        # 重置游戏进展水平
         self.level = 1
+        # 重置得分
         self.score = 0
+        # 重置游戏等级
+        self.grade = 1
 
     def get_saved_high_score(self):
-        """从文件中读取保存的最高得分"""
+        """从文件中读取历史最高得分"""
         path = Path('high_score.json')
         try:
             contents = path.read_text()

@@ -4,8 +4,8 @@ from pygame.sprite import Group
 from bullets.alien.boss.boss_bomb import BossBomb
 from bullets.alien.boss.boss_ordinary_bullet import OrdinaryBullet
 
-class AlienBoss_1:
-    """管理一号外星人boss的类"""
+class AlienBoss_1():
+    """管理一号外星人boss的类，其实例也将加入到外星人编组(aliens)中统一管理"""
 
     def __init__(self, ai_game):
         """初始化各类属性"""
@@ -94,11 +94,11 @@ class AlienBoss_1:
         
     def _move_left_and_right(self):
         """负责Boss常规的左右移动"""
-        self._check_edegs()
+        self._check_edges()
         self.x += self.boss_speed * self.settings.boss_direction
         self.rect.x = self.x
 
-    def _check_edegs(self):
+    def _check_edges(self):
         """检查boss是否移动到了屏幕左右边缘，然后改变其移动方向"""
         if (self.rect.left <= 100 or 
             self.rect.right >= self.screen_rect.right - 100):

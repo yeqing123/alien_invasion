@@ -34,8 +34,6 @@ class BasicPackage(ABC, Sprite):
         self.remove_distance -= self.settings.sp_speed
         #当距离缩小到小于或等于0时，重新获取一个新的值
         if self.remove_distance <= 0:
-            # 随机变换移动方向
-            self.settings.sp_direction *= -1
             self.remove_distance = randint(50, self.settings.screen_width)
 
     def _check_edge(self):

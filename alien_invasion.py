@@ -21,6 +21,7 @@ from explosion_effect import ExplosionEffect
 from alien_boss_1 import AlienBoss_1
 from victory_text import VictoryText
 from supply_packages.missile_package import MissilePackage
+from supply_packages.stealth_package import StealthPackage
 
 class AlienInvasion:
     """管理游戏资源和行为的类"""
@@ -71,6 +72,9 @@ class AlienInvasion:
 
         # 提示补给包是否已经出现
         self.show_package = False
+
+        self.packages.add(StealthPackage(self))
+        self.show_package = True
 
     def run_game(self):
         """开始游戏的主循环"""
@@ -158,10 +162,6 @@ class AlienInvasion:
             path = Path('high_score.json')
             contents = json.dumps(self.stats.high_score)
             path.write_text(contents)
-
-        # 关闭任务调度器
-        if len(self.scheduler.get_jobs()) > 0:
-            self.scheduler.shutdown()
 
         sys.exit()
 
@@ -297,7 +297,7 @@ class AlienInvasion:
         self.sb.prep_level()
 
         # 当水平提升到3时，Boss出现。同时创建一个补给包，强化飞船火力
-        if self.stats.level == 3:
+        if self.stats.level == 2:
             # 创建Boss
             self.boss_1 = AlienBoss_1(self)
             self.show_boss = True
@@ -485,7 +485,7 @@ class AlienInvasion:
 
     def _update_aliens(self):
         """更新所有外星人的位置，并对其相关事件做出响应"""
-        self.aliens.update()
+        self.aliens.update()  
         self._alien_fire_bullet()
         self._check_fleet_edges()
         self._check_alien_bullet_collisions()

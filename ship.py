@@ -73,7 +73,7 @@ class Ship(Sprite):
 
     def launch_missile(self):
         """飞船发射可以自动判断并跟踪最近外星人的导弹"""
-        if self.ship_show:
+        if not self.ai_game.ship_destroy:
             # 从外星舰队中随机的选择一个外星人作为射击目标
             aliens = self.ai_game.aliens.sprites()
             if len(aliens) > 0:
@@ -108,18 +108,14 @@ class Ship(Sprite):
 
         # 添加任务并设置每隔0.1秒执行一次任务，并设置为多线程并发，最大线程数为3
         self.sched.add_job(
-            self._ship_flash, 'interval', seconds=0.1, max_instances=3)
-        
-        # 隐身模式启动10秒后自动关闭
-        # self.sched.add_job(
-        #     self.turn_off_stealth_mode, 'interval', seconds=10, max_instances=3)
+            self._ship_flash, 'interval', seconds=0.1)
         self.sched.start()
 
     def turn_off_stealth_mode(self):
         """关闭飞船的隐身模式"""
         self.stealth_mode = False
         self.ship_show = True
-        self.sched.remove_all_jobs()
+        self.sched.shutdown()
 
     def _ship_flash(self):
         """不断的变换ship_show的值，在绘制飞船时会呈现闪烁的效果"""
