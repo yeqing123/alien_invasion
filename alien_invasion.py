@@ -20,7 +20,7 @@ from game_bg_image import GameBgImage
 from explosion_effect import ExplosionEffect
 from alien_boss_1 import AlienBoss_1
 from victory_text import VictoryText
-from supply_package import SupplyPackage
+from supply_packages.missile_package import MissilePackage
 
 class AlienInvasion:
     """管理游戏资源和行为的类"""
@@ -43,12 +43,14 @@ class AlienInvasion:
         self.sb = Scoreboard(self)
         self.bg_image = GameBgImage(self)
         self.victory_text = VictoryText(self)
-
         self.explosion = ExplosionEffect(self)
+
+        # 创建各类编组，每个编组包含同一类型的成员对象
         self.ship_bullets = pygame.sprite.Group()
         self.alien_bullets = pygame.sprite.Group()
         self.aliens = pygame.sprite.Group()
         self.packages = pygame.sprite.Group()
+
         # 创建任务调度器
         self.scheduler = BackgroundScheduler()
         
@@ -148,11 +150,6 @@ class AlienInvasion:
         # 完成动态设置初始化
         self.settings.initialize_dynamic_settings()
 
-        self.ship.turn_on_stealth_mode()
-
-        self.rocket_package = SupplyPackage(self, "images/rocket_package.png", 'rocket')
-        self.packages.add(self.rocket_package)
-        self.show_package = True
 
     def _close_game(self):
         """如果最高得分被刷新，则保存在文件中，然后退出游戏"""
@@ -162,7 +159,10 @@ class AlienInvasion:
             contents = json.dumps(self.stats.high_score)
             path.write_text(contents)
 
-        self.scheduler.shutdown()
+        # 关闭任务调度器
+        if len(self.scheduler.get_jobs()) > 0:
+            self.scheduler.shutdown()
+
         sys.exit()
 
     def _check_keydown_events(self, event):
@@ -216,17 +216,11 @@ class AlienInvasion:
         """检测补给包与飞船发生碰撞，并做出响应"""
         collided_package = pygame.sprite.spritecollideany(self.ship, self.packages)
         if collided_package:
-            print("发生碰撞了！")
-            self.player.play('enhance', 0, 1)
-            self._enhance_ship(collided_package)
+            print("补充一个补给包！")
+            # 补给包对飞船做出了相应的增强
+            collided_package.enhance_ship()
+            # 清除补给包
             self.packages.remove(collided_package)
-
-    def _enhance_ship(self, package):
-        print("调用_enhance_ship()")
-        if package.type == 'rocket':
-            print("OK!!!")
-            self.scheduler.add_job(self.ship.launch_missile, 'interval', seconds=3)
-            self.scheduler.start()
 
     def _create_alien(self, x_position, y_position):
         """创建一个外星人，并根据实参设置其位置"""
@@ -243,7 +237,7 @@ class AlienInvasion:
         alien_width, alien_height = alien.rect.size
 
         current_x, current_y = alien_width, alien_height
-        while current_y < (self.settings.screen_height - 7 * alien_height):
+        while current_y < (self.settings.screen_height - 8 * alien_height):
             while current_x < (self.settings.screen_width - 2 * alien_width):
                 self._create_alien(current_x, current_y)
                 current_x += 2 * alien_width
@@ -301,12 +295,15 @@ class AlienInvasion:
         # 提升游戏水平
         self.stats.level += 1
         self.sb.prep_level()
-        print(f"sublevel = {self.stats.level}")
-        # 当水平提升到2时，Boss出现。同时创建子弹包，用于强化飞船活力
-        if self.stats.level == 2:
+
+        # 当水平提升到3时，Boss出现。同时创建一个补给包，强化飞船火力
+        if self.stats.level == 3:
+            # 创建Boss
             self.boss_1 = AlienBoss_1(self)
-            
             self.show_boss = True
+            # 创建补给包
+            self.missile_package = MissilePackage(self)
+            self.packages.add(self.missile_package)
             self.show_package = True
 
     def _set_boss_explosions_range(self):
@@ -459,7 +456,7 @@ class AlienInvasion:
             self.stats.ship_left -= 1
             # 刷新剩余飞船的图像，然后开启新的一局
             self.sb.ships.empty()          
-            self.aliens.empty()
+        #    self.aliens.empty()
             self.ship_bullets.empty()
             self.alien_bullets.empty()
             if self.boss_1:  
@@ -468,7 +465,7 @@ class AlienInvasion:
             self.sb.prep_ships()
             self.ship.ship_center()
             self.ship_destroy = False
-            self._create_fleet()
+        #    self._create_fleet()
         else:
             self.player.stop()  # 背景音乐停止播放
             self.game_active = False
@@ -480,7 +477,7 @@ class AlienInvasion:
             number = 0
             # 每次循环时都要判断一下aliens是否为空，
             # 因为在游戏运行时_ship_hit()函数随时都可能被调用，从而清空aliens
-            while number < self.settings.bullet_allow and len(self.aliens) > 0:
+            while number < 3 and len(self.aliens) > 0:
                 index = random.randint(0, len(self.aliens) - 1)
                 alien = self.aliens.sprites()[index]
                 alien.fire_bullet()

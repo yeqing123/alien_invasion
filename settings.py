@@ -22,7 +22,7 @@ class Settings:
         self.alien_bullet_color = (255, 0, 0)
         self.alien_bullet_radius = 4.5
         # 允许连续开火次数的上限
-        self.bullet_allow = 10
+        self.bullet_allow = 3
 
         # 外星人设置
         self.alien_drop_speed = 10
