@@ -2,12 +2,11 @@ import pygame
 import datetime
 
 from pygame.sprite import Sprite
-from apscheduler.schedulers.background import BackgroundScheduler
 from random import randint
 
-from bullets.ship.ship_bullet import ShipBullet
-from bullets.ship.ship_rocket import ShipRocket
-from bullets.ship.ship_missile import ShipMissile
+from level_1.bullets.ship.ship_bullet import ShipBullet
+from level_1.bullets.ship.ship_rocket import ShipRocket
+from level_1.bullets.ship.ship_missile import ShipMissile
 
 class Ship(Sprite):
     """管理飞船的类"""
@@ -20,13 +19,14 @@ class Ship(Sprite):
         self.screen_rect = ai_game.screen.get_rect()
         self.settings = ai_game.settings
         self.player = ai_game.player
+        self.scheduler = ai_game.scheduler
 
         # 飞船移动标志（刚开始不移动）
         self.moving_right = False
         self.moving_left = False
 
         # 加载飞船图像并获取其外接矩形
-        self.image = pygame.image.load('images/processed_BluePlane.png')
+        self.image = pygame.image.load('level_1/images/processed_BluePlane.png')
         self.rect = self.image.get_rect()
 
         # 每艘新飞船都放在屏幕底部的中央
@@ -62,7 +62,7 @@ class Ship(Sprite):
 
     def launch_rocket(self):
         """"飞船发射火箭弹（一次同时发射左右两枚）"""
-        if self.ship_show:
+        if not self.ai_game.ship_destroy:
             # 创建两枚火箭弹，并标明其位置
             left_rocket = ShipRocket(self, 'left')
             right_rocket = ShipRocket(self,'right')
@@ -74,6 +74,7 @@ class Ship(Sprite):
     def launch_missile(self):
         """飞船发射可以自动判断并跟踪最近外星人的导弹"""
         if not self.ai_game.ship_destroy:
+            self.player.play('ship_bomb', 0, 1)
             # 从外星舰队中随机的选择一个外星人作为射击目标
             aliens = self.ai_game.aliens.sprites()
             if len(aliens) > 0:
@@ -103,19 +104,18 @@ class Ship(Sprite):
         self.stealth_mode = True
         print("Start time: %s" % \
            datetime.datetime.now().strftime("%H:%M:%S"))
-        # 创建任务调度器
-        self.sched = BackgroundScheduler()
 
-        # 添加任务并设置每隔0.1秒执行一次任务，并设置为多线程并发，最大线程数为3
-        self.sched.add_job(
-            self._ship_flash, 'interval', seconds=0.1)
-        self.sched.start()
+        # 添加任务并设置每隔0.1秒执行一次任务
+        self.scheduler.add_job(
+            self._ship_flash, 'interval', seconds=0.1, id='stealth_mode')
 
     def turn_off_stealth_mode(self):
         """关闭飞船的隐身模式"""
+        # 删除任务前先立即暂停已经执行的任务，防止造成混乱
+        self.scheduler.pause_job(job_id='stealth_mode')
+        self.scheduler.remove_job(job_id='stealth_mode')
         self.stealth_mode = False
         self.ship_show = True
-        self.sched.shutdown()
 
     def _ship_flash(self):
         """不断的变换ship_show的值，在绘制飞船时会呈现闪烁的效果"""

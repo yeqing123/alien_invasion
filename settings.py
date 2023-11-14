@@ -21,8 +21,6 @@ class Settings:
 
         self.alien_bullet_color = (255, 0, 0)
         self.alien_bullet_radius = 4.5
-        # 允许连续开火次数的上限
-        self.bullet_allow = 3
 
         # 外星人设置
         self.alien_drop_speed = 10
@@ -44,6 +42,8 @@ class Settings:
 
     def initialize_dynamic_settings(self):
         """初始化游戏的动态设置"""
+        # 允许连续开火次数的上限
+        self.bullet_allow = 3
         self.ship_speed = 2.5
         self.ship_bullet_speed = 5.5
         self.alien_bullet_speed = 1.5
@@ -67,5 +67,6 @@ class Settings:
 
     def get_custom_events(self):
         """创建一个新的自定义事件"""
+        print("自定义一个事件！")
         self.event_order += 1
         return pygame.USEREVENT + self.event_order

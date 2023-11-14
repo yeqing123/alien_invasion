@@ -15,6 +15,7 @@ class Button:
         # 创建一个用于放置按钮的矩形，并将该矩形放置在屏幕中心
         self.rect = pygame.rect.Rect(0, 0, self.button_width, self.button_height)
         self.rect.center = self.screen.get_rect().center
+        self.rect.y += 300
         # 创建用于在按钮上渲染文本的Font对象
         self.font = pygame.font.SysFont(None, 48)
         # 按钮只需创建一次

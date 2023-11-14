@@ -1,7 +1,7 @@
 import pygame
 
-from apscheduler.schedulers.background import BackgroundScheduler
-from supply_packages.basic_package import BasicPackage
+
+from level_1.supply_packages.basic_package import BasicPackage
 
 class MissilePackage(BasicPackage):
     """该类用于创建导弹补给包，使得飞船可以拥有发射导弹的能力"""
@@ -9,9 +9,10 @@ class MissilePackage(BasicPackage):
     def __init__(self, ai_game):
         """初始化各类属性"""
         super().__init__(ai_game)
+        self.scheduler = ai_game.scheduler
 
         # 加载补给包的显示图像
-        self.image = pygame.image.load("images/rocket_package.png")
+        self.image = pygame.image.load("level_1/images/rocket_package.png")
         self.rect = self.image.get_rect()
 
         # 初始化补给包的位置
@@ -28,12 +29,9 @@ class MissilePackage(BasicPackage):
             print("OK!!!")
             self.ai_game.player.play('enhance', 0, 0.5)
             
-            # 创建一个任务调度器并添加任务，每个三秒发射一枚导弹
-            self.scheduler = BackgroundScheduler()
+            # 向任务调度器中添加任务，每个三秒发射一枚导弹
             self.scheduler.add_job(
                 self.ai_game.ship.launch_missile, 'interval', seconds=3)
-        
-            self.scheduler.start()
                
 
     

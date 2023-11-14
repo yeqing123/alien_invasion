@@ -10,8 +10,8 @@ class GameBgImage:
         self.screen_rect = self.screen.get_rect()
 
         #加载并生成两张背景图像的image对象
-        self.image_1 = pygame.image.load('images/img_bg_level_1.jpg')
-        self.image_2 = pygame.image.load('images/img_bg_level_1.jpg')
+        self.image_1 = pygame.image.load('level_1/images/img_bg_level_1.jpg')
+        self.image_2 = pygame.image.load('level_1/images/img_bg_level_1.jpg')
         self.rect_1 = self.image_1.get_rect()
         self.rect_2 = self.image_2.get_rect()
 

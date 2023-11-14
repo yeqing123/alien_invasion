@@ -2,17 +2,17 @@ import pygame
 
 from pygame.sprite import Sprite
 
-class BossBomb(Sprite):
-    """创建Boss发射的炸弹的类"""
+class OrdinaryBullet(Sprite):
+    """负责管理小圆点子弹"""
     
     def __init__(self, ai_game, position):
         """初始化各类属性"""
         super().__init__()
         self.ai_game = ai_game
         self.screen = ai_game.screen
-        self.drop_speed = 4.5
+        self.flight_speed = 3.5
 
-        self.image = pygame.image.load('images/nzd5 (2).png')
+        self.image = pygame.image.load('level_1/images/1_17.png')
         self.rect = self.image.get_rect()
 
         self._set_position(position)
@@ -21,13 +21,13 @@ class BossBomb(Sprite):
         self.y = float(self.rect.y)
 
     def _set_position(self, position):
-        """设置出现的坐标位置，position为包含一对坐标值的元组"""
+        """设置出现的坐标位置，position为一个包含坐标的元组"""
         self.rect.centerx = position[0]
         self.rect.centery = position[1]
 
     def update(self):
         """更新其位置"""
-        self.y += self.drop_speed
+        self.y += self.flight_speed
         self.rect.y = self.y
 
     def draw_bullet(self):

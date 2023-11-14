@@ -14,7 +14,7 @@ class ShipMissile(Sprite):
         self.ship = self.ai_game.ship
         self.settings = ai_game.settings
 
-        self.image = pygame.image.load("images/rocket.png")
+        self.image = pygame.image.load("level_1/images/rocket.png")
         self.rect = self.image.get_rect()
         self.rect.center = self.ship.rect.center
 
@@ -70,7 +70,7 @@ class ShipMissile(Sprite):
         if self.degree < self.angle:
             self.degree += self.rotate_scale
         # 重新加载图像
-        self.image = pygame.image.load("images/rocket.png")
+        self.image = pygame.image.load("level_1/images/rocket.png")
         # 旋转导弹图像
         self.image = pygame.transform.rotate(self.image, self.degree * self.rotate_direction)
         # 设置导弹已弹头为轴心旋转

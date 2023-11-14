@@ -1,8 +1,9 @@
 import pygame
 
 from pygame.sprite import Group
-from bullets.alien.boss.boss_bomb import BossBomb
-from bullets.alien.boss.boss_ordinary_bullet import OrdinaryBullet
+
+from level_1.bullets.alien.boss.boss_bomb import BossBomb
+from level_1.bullets.alien.boss.boss_ordinary_bullet import OrdinaryBullet
 
 class AlienBoss_1():
     """管理一号外星人boss的类，其实例也将加入到外星人编组(aliens)中统一管理"""
@@ -12,11 +13,12 @@ class AlienBoss_1():
         self.ai_game = ai_game
         self.screen = ai_game.screen
         self.settings = ai_game.settings
+        self.scheduler = ai_game.scheduler
         self.screen_rect = self.screen.get_rect()
         
         # 加载两个Boss的图片，一个是普通图片另一个是高亮图片
-        self.image = pygame.image.load("images/processed_img_plane_boss.png")
-        self.high_image = pygame.image.load("images/high_light_boss.png")
+        self.image = pygame.image.load("level_1/images/processed_img_plane_boss.png")
+        self.high_image = pygame.image.load("level_1/images/high_light_boss.png")
         self.rect = self.image.get_rect()
         self.high_rect = self.high_image.get_rect()
 
@@ -37,10 +39,6 @@ class AlienBoss_1():
         # 定义Boss的血量
         self.blood_volume = 100
 
-        # 自定义事件
-        self.FIRE_BULLET_EVENT = self.settings.get_custom_events()
-        self.FIREFULL_EVENT = self.settings.get_custom_events()
-
         # 设置游戏运行过程中Boss的一些状态标识
         self.high_light = False
         self.allow_fire = False
@@ -54,13 +52,12 @@ class AlienBoss_1():
             self._boss_appearing()
         elif not self.allow_fire: # 如果还没有允许射击，则允许开火
             self.allow_fire = True
-            # 设置普通子弹发射的定时器
-            pygame.time.set_timer(self.FIRE_BULLET_EVENT, 2000)
-            # 设置俯冲投弹的定时器
-            pygame.time.set_timer(self.FIREFULL_EVENT, 10000)
+            # 向任务调度器中添加Boss的投弹任务，每三秒开火一次，每十秒俯冲投弹一次
+            self.scheduler.add_job(self.fire_ordinary_bullet, 'interval', seconds=3)
+            self.scheduler.add_job(self._begin_dive, 'interval', seconds=10)
         elif self.begin_dive: # 如果允许俯冲，则开始俯冲并投弹
-            self._dive()
-            self.bombs.update()
+            self._dive_drop_bomb()
+            self.bombs.update() # 更新炸弹的位置
         else:     # 如果以上情况都不是，则左右运动
             self._move_left_and_right()
 
@@ -69,7 +66,11 @@ class AlienBoss_1():
         self.y += 2.5
         self.rect.y = self.y
 
-    def _dive(self):
+    def _begin_dive(self):
+        """开始俯冲投弹"""
+        self.begin_dive = True
+
+    def _dive_drop_bomb(self):
         """让Boss做俯冲投弹后回撤的动作"""
         # 如果还没有投弹，就向前俯冲指定距离后投弹。如果已经投弹完成，就回撤到起始位置
         if not self.drop_bomb_done:

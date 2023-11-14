@@ -7,19 +7,21 @@ class SoundsPlayer:
         """初始化相关的属性"""
         pygame.init()
         pygame.mixer.init()
-        pygame.mixer.set_num_channels(10)
+        pygame.mixer.set_num_channels(15)
 
         # 所有需要加载的游戏音效的文件路径都在这里
         self.files_path = {
-            'bg_music_1': 'musics/CONTINUE.ogg', 
-            'bg_music_2': 'musics/bg_music(Level_1).mp3',
-            'fire_bullet': 'musics/fire_bullet.mp3',
-            'explode': 'musics/alien_explode.wav',
-            'boss_explode': 'musics/boss_explode.wav',
-            'dot_fire': 'musics/qhzd.ogg',
-            'drop_bomb': 'musics/drop_bomb.wav',
-            'victory':'musics/zd_bgm.ogg',
-            'enhance': 'musics/buff.mp3',
+            'bg_music_1': 'level_1/musics/bg_music(Level_1).mp3',
+            'bg_music_2': 'level_1/musics/CONTINUE.ogg', 
+            'fire_bullet': 'level_1/musics/fire_bullet.mp3',
+            'explode': 'level_1/musics/alien_explode.wav',
+            'boss_explode': 'level_1/musics/boss_explode.wav',
+            'dot_fire': 'level_1/musics/qhzd.ogg',
+            'drop_bomb': 'level_1/musics/drop_bomb.wav',
+            'victory':'level_1/musics/zd_bgm.ogg',
+            'enhance': 'level_1/musics/buff.mp3',
+            'ship_bomb': 'level_1/musics/skill2.ogg',
+            'game_over': 'level_1/musics/游戏结束(GameOver).wav',
             }
         
         # 用一个字典保存加载后生成的Sound对象（以文件名为键，以对应的Sound对象为值）

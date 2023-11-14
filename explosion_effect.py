@@ -10,7 +10,7 @@ class ExplosionEffect:
         self.screen = ai_game.screen
 
         # 加载图片文件
-        self.image = pygame.image.load("images/Progear_FireExplosions.png")
+        self.image = pygame.image.load("level_1/images/Progear_FireExplosions.png")
         self.rect = self.image.get_rect()
         # 设置是否显示的标识
         self.show_image = False
@@ -20,12 +20,12 @@ class ExplosionEffect:
 
     def load_image(self, filepath):
         """重新加载指定路径上的爆炸图片"""
-        self.image = pygame.image.load("images/big_explosion.png")
+        self.image = pygame.image.load("level_1/images/big_explosion.png")
         self.rect = self.image.get_rect()
 
     def reset(self):
         """重置爆炸图片为默认效果图"""
-        self.image = pygame.image.load("images/Progear_FireExplosions.png")
+        self.image = pygame.image.load("level_1/images/Progear_FireExplosions.png")
         self.rect = self.image.get_rect()
         pygame.time.set_timer(self.SHOW_IMAGE_EVENT, 150, True)
 

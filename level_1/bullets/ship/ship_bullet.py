@@ -11,7 +11,7 @@ class ShipBullet(Sprite):
         self.settings = ai_game.settings
 
         # 加载一个字典图片，生成一个image对象
-        self.image = pygame.image.load('images/1 (3).png')
+        self.image = pygame.image.load('level_1/images/1 (3).png')
         self.rect = self.image.get_rect()
         self.rect.midtop = ai_game.ship.rect.midtop    
         # 设置为浮点数类型

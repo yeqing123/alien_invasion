@@ -1,8 +1,8 @@
 import pygame
 
 from threading import Timer
-from apscheduler.schedulers.background import BackgroundScheduler
-from supply_packages.basic_package import BasicPackage
+
+from level_1.supply_packages.basic_package import BasicPackage
 
 class StealthPackage(BasicPackage):
     """该类用于创建可使飞船隐身的补给包"""
@@ -12,7 +12,7 @@ class StealthPackage(BasicPackage):
         super().__init__(ai_game)
 
         # 加载补给包的显示图像
-        self.image = pygame.image.load("images/stealth_package.png")
+        self.image = pygame.image.load("level_1/images/stealth_package.png")
         self.rect = self.image.get_rect()
 
         # 初始化补给包的位置
