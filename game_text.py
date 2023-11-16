@@ -6,10 +6,10 @@ class GameText:
         """初始化资源属性"""
         self.screen = ai_game.screen
         # 定义字体大小的风格
-        self.font = pygame.font.SysFont('italic', 150)
+        self.font = pygame.font.SysFont('fangsong', 100)
         # 设置文本颜色等属性并将其渲染为图像
-        self.v_image = self.font.render("Victory!", True, (255, 0, 0))
-        self.o_image = self.font.render("Game Over!", True, (255, 0, 0))
+        self.v_image = self.font.render("胜利!", True, (255, 0, 0), (100, 100, 255))
+        self.o_image = self.font.render("游戏结束!", True, (255, 0, 0), (100, 100, 255))
         self.v_rect = self.v_image.get_rect()
         self.o_rect = self.o_image.get_rect()
         # 设置文本显示位置

@@ -17,7 +17,7 @@ class Button:
         self.rect.center = self.screen.get_rect().center
         self.rect.y += 300
         # 创建用于在按钮上渲染文本的Font对象
-        self.font = pygame.font.SysFont(None, 48)
+        self.font = pygame.font.SysFont('fangsong', 48)
         # 按钮只需创建一次
         self._prep_msg(msg)
 

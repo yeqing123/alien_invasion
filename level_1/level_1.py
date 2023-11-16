@@ -4,12 +4,15 @@ import threading
 
 from time import sleep
 from random import randint
-from functools import partial
+from apscheduler.schedulers.background import BackgroundScheduler
 
+from ship import Ship
+from level_1.settings import Settings
+from level_1.game_bg_image import GameBgImage_1
 from level_1.alien import Alien
 from level_1.alien_boss_1 import AlienBoss_1
-from level_1.supply_packages.missile_package import MissilePackage
-from level_1.supply_packages.stealth_package import StealthPackage
+from supply_packages.missile_package import MissilePackage
+from supply_packages.stealth_package import StealthPackage
 from level_1.bullets.ship.ship_missile import ShipMissile
 
 class Level_1:
@@ -18,32 +21,42 @@ class Level_1:
     def __init__(self, main):
         """初始化游戏并创建游戏资源"""
         self.main = main
-        self.settings = main.settings
+        self.settings = Settings()
         self.stats = main.stats
         self.screen = main.screen
         self.screen_rect = main.screen_rect
         self.explosion = main.explosion
-        self.play_button = main.play_button
+        self.start_button = main.start_button
         self.sb = main.sb
-        self.ship = main.ship
         self.packages = main.packages
         self.ship_bullets = main.ship_bullets
-        self.aliens = main.aliens
         # SoundsPlayer要在Scoreboard类之前创建，因为后者的定义中会用到前者的实例
         self.player = main.player
-        self.scheduler = main.scheduler
-        self.bg_image = main.bg_image
         self.game_text = main.game_text
+        self.bg_image = GameBgImage_1(self.main)
+
         self.clock = pygame.time.Clock()
 
-        # 创建存放外星人子弹的编组
+        # 创建一个任务调度器，并立即启动
+        self.scheduler = BackgroundScheduler()
+        self.scheduler.start()
+
+        # 飞船是否已被击毁
+        self.ship_destroy = False
+        # 创建本关卡的飞船
+        self.ship = Ship(self)
+
+        # 创建存放外星人和外星人子弹的编组
         self.alien_bullets = pygame.sprite.Group()
+        self.aliens = pygame.sprite.Group()  
         
         self.boss_1 = None
         # 提示是否出现Boss
         self.show_boss = False
+
         # 提示是否胜利
         self.victory = False
+
         # 提示游戏结束
         self.game_over = False
 
@@ -58,9 +71,9 @@ class Level_1:
 
     def run_game(self):
         """开始游戏的主循环"""
+        self._start_game()
         while True:
             self.main._check_events()
-
             if self.main.game_active:
                 self.bg_image.update()
                 self.ship.update()
@@ -82,13 +95,15 @@ class Level_1:
 
         # 创建一支外星舰队
         self._create_fleet()
+        # 播放背景音乐
+        self.player.play('bg_music_1', -1, 0.3)
       
         # 将飞船放置在屏幕底部的中央
-        self.main.ship_destroy = False
+        self.ship_destroy = False
         self.show_boss = False
         self.game_over = False
         self.ship.ship_center()
-       
+
     def _update_bullets(self):
         """更新屏幕上所有子弹的位置，并删除已飞出屏幕顶部的子弹"""
         # 更新所有子弹的位置
@@ -118,7 +133,8 @@ class Level_1:
 
     def _check_package_ship_collisitions(self):
         """检测补给包与飞船发生碰撞，并做出响应"""
-        collided_package = pygame.sprite.spritecollideany(self.ship, self.packages)
+        collided_package = pygame.sprite.spritecollideany(
+            self.ship, self.packages, pygame.sprite.collide_mask)
         if collided_package:
             print("补充一个补给包！")
             # 补给包对飞船做出了相应的增强
@@ -141,8 +157,8 @@ class Level_1:
         alien_width, alien_height = alien.rect.size
 
         current_x, current_y = alien_width, alien_height
-        while current_y < (self.settings.screen_height - 8 * alien_height):
-            while current_x < (self.settings.screen_width - 2 * alien_width):
+        while current_y < (self.screen_rect.height - 8 * alien_height):
+            while current_x < (self.screen_rect.width - 2 * alien_width):
                 self._create_alien(current_x, current_y)
                 current_x += 2 * alien_width
             # 每添加一行外星人后，重置x值并递增y值
@@ -166,7 +182,7 @@ class Level_1:
         """检查是否有飞船发射的子弹和外星人发生碰撞（即是否中了外星人），并做出响应"""
         # 获取一个以子弹为一个键，以与该子弹碰撞的所有外星人组成的列表为值的字典
         collisions = pygame.sprite.groupcollide(
-            self.ship_bullets, self.aliens, True, True)
+            self.ship_bullets, self.aliens, True, True, pygame.sprite.collide_mask)
         
         if collisions:
             # 将每个被击落的外星人都得计入得分
@@ -180,7 +196,7 @@ class Level_1:
 
             # 如果舰队全部被消灭，就将游戏递增一个新的子层次
             if not self.aliens:
-                self._winding_level()
+                self._increase_difficulty()
 
     def _alien_hit(self, alien):
         """创建一个外星人被击中的效果"""
@@ -188,8 +204,8 @@ class Level_1:
         self.explosion.set_effect(alien.rect.x, alien.rect.y)
         self.aliens.remove(alien)
 
-    def _winding_level(self):
-        """将游戏提升一个新的等级"""
+    def _increase_difficulty(self):
+        """增加游戏难度，并依据条件增加Boss"""
         # 删除现有子弹，并创建一支新的外星舰队
         self.ship_bullets.empty()
         self.alien_bullets.empty()
@@ -197,11 +213,10 @@ class Level_1:
         # 加快游戏节奏
         self.settings.increase_speed()
         # 提升游戏等级
-        self.stats.level += 1
-        self.sb.prep_level()
+        self.stats.difficulty += 1
 
         # 当水平提升到3时，Boss出现。同时创建一个补给包，强化飞船火力
-        if self.stats.level == 3:
+        if self.stats.difficulty == 2:
             # 创建Boss
             self.boss_1 = AlienBoss_1(self)
             self.show_boss = True
@@ -225,7 +240,7 @@ class Level_1:
         """检查Boss是否被飞船发射的子弹击中"""
         # 检测Boss是否与飞船的子弹发生了碰撞
         collied_any = pygame.sprite.spritecollideany(
-            self.boss_1, self.ship_bullets)
+            self.boss_1, self.ship_bullets, pygame.sprite.collide_mask)
         
         # 如果碰撞了，就高亮Boss，并删除子弹
         if collied_any:
@@ -237,7 +252,7 @@ class Level_1:
             self.boss_1.boss_high_light()
             self.ship_bullets.remove(collied_any)
             # 每次Boss被击中都会掉血
-            self.boss_1.blood_volume -= 1
+            self.boss_1.blood_volume -= 10
         
             # 每当Boss被子弹击中，都判断其血量是否已耗尽
             if self.boss_1.blood_volume == 0:
@@ -288,10 +303,13 @@ class Level_1:
 
     def _victory_effect(self):
         """每当打败Boss都会播放的胜利效果"""
+        self.scheduler.shutdown()
+        self.main.game_active = False
         self.victory = True
         self.player.stop()
         self.player.play('victory', -1, 1)
-        self.scheduler.remove_all_jobs()
+        self.stats.level += 1
+        pygame.mouse.set_visible(True)
 
     def _game_over_effect(self):
         """当游戏失败时播放的游戏结束的效果"""
@@ -304,7 +322,7 @@ class Level_1:
         # 判断是否有外星人到达了屏幕底部
         for alien in self.aliens.sprites():
             if alien.rect.bottom >= self.screen.get_rect().height:
-                self.main.ship_destroy = True
+                self.ship_destroy = True
                 sleep(2)
                 self._ship_hit()
                 # 因为已经重启了一局，所以for循环无需再继续
@@ -316,15 +334,15 @@ class Level_1:
         
         # 获取与飞船发生碰撞的外星人
         collided_alien = pygame.sprite.spritecollideany(
-            self.ship, self.aliens)
+            self.ship, self.aliens, pygame.sprite.collide_mask)
         
         # 当飞船与子弹碰撞时，做出相应的操作
-        if collided_bullet and not self.main.ship_destroy:
+        if collided_bullet and not self.ship_destroy:
             self.alien_bullets.remove(collided_bullet)
             self._ship_destroyed() 
 
         # 当飞船与外星人碰撞时，做出相应的操作
-        if collided_alien and not self.main.ship_destroy:
+        if collided_alien and not self.ship_destroy:
             self.aliens.remove(collided_alien)
             self._ship_destroyed()
 
@@ -336,16 +354,16 @@ class Level_1:
         """检查Boss的子弹命中飞船"""
         # 检测与飞船发生碰撞的Boss子弹
         collided_bullet = pygame.sprite.spritecollideany(
-            self.ship, self.boss_1.ordinary_bullets)
+            self.ship, self.boss_1.ordinary_bullets, pygame.sprite.collide_mask)
         collided_bomb = pygame.sprite.spritecollideany(
-            self.ship, self.boss_1.bombs)
+            self.ship, self.boss_1.bombs, pygame.sprite.collide_mask)
         
         # 当飞船与子弹碰撞时，做出相应的操作
-        if collided_bullet and not self.main.ship_destroy:
+        if collided_bullet and not self.ship_destroy:
             self.boss_1.ordinary_bullets.remove(collided_bullet)
             self._ship_destroyed()
 
-        if collided_bomb and not self.main.ship_destroy:
+        if collided_bomb and not self.ship_destroy:
             self.boss_1.bombs.remove(collided_bomb)
             self._ship_destroyed()
 
@@ -355,7 +373,7 @@ class Level_1:
         self.player.play('explode', 0, 1)
         # 设置爆炸图片显示的正确位置
         self.explosion.set_effect(self.ship.rect.x, self.ship.rect.y)
-        self.main.ship_destroy = True
+        self.ship_destroy = True
         # 设置多线程定时器，延迟三秒后将执行self._ship_hit()方法
         threading.Timer(3, self._ship_hit).start()
       
@@ -376,7 +394,7 @@ class Level_1:
                 self.boss_1.ordinary_bullets.empty()
             self.sb.prep_ships()
             self.ship.ship_center()
-            self.main.ship_destroy = False
+            self.ship_destroy = False
         else:  # 备用飞船全部用完，游戏结束
             self.scheduler.remove_all_jobs()
             self.player.stop()  # 背景音乐停止播放
@@ -425,7 +443,7 @@ class Level_1:
         self.bg_image.blitme()
         self.aliens.draw(self.screen)
         self.ship_bullets.draw(self.screen)
-        if not self.main.ship_destroy:
+        if not self.ship_destroy :
             self.ship.blitme()
         for bullet in self.alien_bullets.sprites():
             bullet.draw_bullet()
@@ -440,14 +458,14 @@ class Level_1:
         self.packages.draw(self.screen)
         self.sb.ships.draw(self.screen)
         self.sb.show_score()
-        # 如果游戏处于非活动状态，就绘制Play按钮
-        if not self.main.game_active:
-            self.play_button.draw_button()
 
+        # 根据游戏状态，就绘制相应的按钮
         if self.victory:
             self.game_text.show_victory_text()
+            self.main.continue_button.draw_button()
         if self.game_over:
             self.game_text.show_game_over_text()
+            self.main.restart_button.draw_button()
 
         # 显示窗口
         pygame.display.flip()

@@ -7,6 +7,9 @@ class GameStats:
     def __init__(self, ai_game):
         """初始化统计信息"""
         self.settings = ai_game.settings
+
+        # 设置游戏等级
+        self.level = 2
         # 最高得分不应该被重置
         self.high_score = self.get_saved_high_score()
         # 初始化有关信息
@@ -15,12 +18,11 @@ class GameStats:
     def reset_stats(self):
         """重置游戏的状态信息"""
         self.ship_left = self.settings.ship_limit
-        # 重置游戏进展水平
-        self.level = 1
+       
         # 重置得分
         self.score = 0
-        # 重置游戏等级
-        self.grade = 1
+        # 重置游戏难度，这意味着游戏将回到level所在等级的最开始状态
+        self.difficulty = 1
 
     def get_saved_high_score(self):
         """从文件中读取历史最高得分"""

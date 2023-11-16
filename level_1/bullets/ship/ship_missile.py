@@ -59,10 +59,15 @@ class ShipMissile(Sprite):
             self.rotate_direction = -1
         else:
             self.rotate_direction = 1
-        # 根据a,b,c的长度，计算导弹b与c之间的夹角，即导弹的旋转角度
-        self.angle = math.degrees(math.acos((a*a-b*b-c*c)/(-2*b*c)))
-        # 计算每次旋转时的尺度
-        self.rotate_scale = float(self.angle / self.step_number)
+            
+        try:    
+            # 根据a,b,c的长度，计算导弹b与c之间的夹角，即导弹的旋转角度
+            self.angle = math.degrees(math.acos((a*a-b*b-c*c)/(-2*b*c)))
+        except ZeroDivisionError:
+            pass
+        else:
+            # 计算每次旋转时的尺度
+            self.rotate_scale = float(self.angle / self.step_number)
 
     def _rotate_missile(self):
         """旋转导弹"""
