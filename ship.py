@@ -28,7 +28,7 @@ class Ship(Sprite):
         self.moving_down = False
 
         # 加载飞船图像并获取其外接矩形
-        self.image = pygame.image.load('level_1/images/processed_BluePlane.png')
+        self.image = pygame.image.load('images/ships/processed_BluePlane.png')
         self.rect = self.image.get_rect()
 
         # 每艘新飞船都放在屏幕底部的中央
@@ -59,11 +59,13 @@ class Ship(Sprite):
 
     def fire_bullet(self):
         """飞船发射子弹"""
-        if not self.ai_game.ship_destroy and \
-                len(self.ai_game.ship_bullets) < self.settings.ship_bullet_allow:
-            new_bullet = ShipBullet(self.ai_game)
-            self.ai_game.ship_bullets.add(new_bullet)
-            self.player.play('fire_bullet', 0, 1)
+        # if not self.ai_game.ship_destroy and \
+        #         len(self.ai_game.ship_bullets) < self.settings.ship_bullet_allow:
+        new_bullet = ShipBullet(self.ai_game)
+        self.ai_game.ship_bullets.add(new_bullet)
+        self.player.play('fire_bullet', 0, 1)
+        #print(f"飞船的子弹： {len(self.ai_game.ship_bullets)}")
+      
 
     def launch_rocket(self):
         """"飞船发射火箭弹（一次同时发射左右两枚）"""

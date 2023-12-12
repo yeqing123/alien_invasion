@@ -13,7 +13,7 @@ class StealthPackage(BasicPackage):
         self.scheduler = ai_game.scheduler
 
         # 加载补给包的显示图像
-        self.image = pygame.image.load("level_1/images/stealth_package.png")
+        self.image = pygame.image.load("images/supply_packages/stealth_package.png")
         self.rect = self.image.get_rect()
 
         # 初始化补给包的位置

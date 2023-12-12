@@ -14,6 +14,7 @@ class ShotBullet(Sprite):
         self.shooter = shooter
         # 创建一个圆点子弹
         self.image = pygame.image.load("images/bullets/dot_bullet.png")
+        self.image = self.image.convert_alpha()
         self.rect = self.image.get_rect()
         
         # 设置子弹的正确位置

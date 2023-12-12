@@ -12,6 +12,11 @@ class GameBgImage_2:
         #加载并生成两张背景图像的image对象
         self.image_1 = pygame.image.load('images/bg_images/img_bg_level_2.jpg')
         self.image_2 = pygame.image.load('images/bg_images/img_bg_level_2.jpg')
+
+         # 对图片进行优化处理
+        self.image_1 = self.image_1.convert_alpha()
+        self.image_2 = self.image_2.convert_alpha()
+        
         self.rect_1 = self.image_1.get_rect()
         self.rect_2 = self.image_2.get_rect()
 

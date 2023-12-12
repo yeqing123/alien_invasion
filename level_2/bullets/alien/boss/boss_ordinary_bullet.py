@@ -13,6 +13,7 @@ class OrdinaryBullet(Sprite):
         self.flight_speed = 3.5
 
         self.image = pygame.image.load('level_1/images/1_17.png')
+        self.image = self.image.convert_alpha()
         self.rect = self.image.get_rect()
 
         self._set_position(position)

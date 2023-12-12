@@ -17,8 +17,8 @@ class AlienBoss_1():
         self.screen_rect = self.screen.get_rect()
         
         # 加载两个Boss的图片，一个是普通图片另一个是高亮图片
-        self.image = pygame.image.load("level_1/images/processed_img_plane_boss.png")
-        self.high_image = pygame.image.load("level_1/images/high_light_boss.png")
+        self.image = pygame.image.load("images/aliens/bosses/boss_1.png")
+        self.high_image = pygame.image.load("images/aliens/bosses/high_light_boss_1.png")
         self.rect = self.image.get_rect()
         self.high_rect = self.high_image.get_rect()
 

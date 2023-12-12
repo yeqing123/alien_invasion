@@ -20,7 +20,12 @@ class Alien_3(Sprite):
         self.screen_rect = ai_game.screen_rect
 
         self.image = pygame.image.load('images/aliens/alien_3.png')
+         # 对图片进行优化处理
+        self.image = self.image.convert_alpha()
         self.rect = self.image.get_rect()
+
+        # 设置该外星人的血量为20
+        self.blood_volume = 20
 
         # 设置外星人的初始位置
         self.rect.x = randint(0, self.screen_rect.width)

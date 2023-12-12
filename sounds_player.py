@@ -1,88 +1,101 @@
 import pygame
 
+from threading import Thread
+
 class SoundsPlayer:
     """负责播放音乐的类"""
 
-    def __init__(self):
+    def __init__(self, sounds_path):
         """初始化相关的属性"""
         pygame.init()
         pygame.mixer.init()
-        pygame.mixer.set_num_channels(20)
-
-        # 所有需要加载的游戏音效的文件路径都在这里
-        self.files_path = {
-            'bg_music_1': 'level_1/musics/bg_music(Level_1).mp3',
-            'bg_music_2': 'level_1/musics/CONTINUE.ogg', 
-            'fire_bullet': 'level_1/musics/fire_bullet.mp3',
-            'explode': 'level_1/musics/alien_explode.wav',
-            'boss_explode': 'level_1/musics/boss_explode.wav',
-            'small_bullet': 'level_1/musics/qhzd.ogg',
-            'drop_bomb': 'level_1/musics/drop_bomb.wav',
-            'victory':'level_1/musics/zd_bgm.ogg',
-            'enhance': 'level_1/musics/buff.mp3',
-            'ship_bomb': 'level_1/musics/skill2.ogg',
-            'game_over': 'level_1/musics/游戏结束(GameOver).wav',
-            'launch_shotgun': 'level_2/musics/发射炮弹的音效_爱给网_aigei_com.mp3',
-            'laser_shot': 'level_2/musics/能量激光发射聚集形成等音效 (6)_爱给网_aigei_com.mp3',
-            'great_war_boss_2': 'level_2/musics/雷霆战机boss背景音乐_爱给网_aigei_com.wav',
-            'boss_2_apear': 'level_2/musics/Boss出场战斗氛围铺垫-短视频人物登场-紧张神秘氛围_爱给网_aigei_com.wav',
-            'storage_force': 'level_2/musics/武器蓄能 蓄力_爱给网_aigei_com.mp3',
-            'boss_2_laser_beam': 'level_2/musics/激光光束充电回路1 - 科幻武器- 激光光束充电回路_ 通电_爱给网_aigei_com.mp3',
-            }
-        
-        # 用一个字典保存加载后生成的Sound对象（以文件名为键，以对应的Sound对象为值）
-        self.sounds_dictionary = {}
-        # 给每个Sound分配一个音频通道ID（默认最多8个）
-        self.channels_id = {}
-        # 音频通道的编号
+        self.channels_number = 20
         self.id = 0
+        pygame.mixer.set_num_channels(self.channels_number)
 
-        # 加载所有音效文件
-        self._load_files()
-
-    def _load_files(self):
-        """加载属性字典files_path中保存的所有音频文件"""
-        for name, path in self.files_path.items():
-            try :
-                sound = pygame.mixer.Sound(path)
-            except FileNotFoundError:
-                print(f"No file exists in the {path}!")
-            else:
-                self.sounds_dictionary[name] = sound
-                self.channels_id[name] = self.id
-                self.id += 1
+        # 获取每一关将要播放的声音文件的路径
+        self.files_path = sounds_path
         
+        # 以name为键，以Sound和Channel组成的元组为值，将加载文件后生成的对象保存在字典中
+        self.sc_dictionary = {}
+        
+
+    def _load_file(self, name):
+        """根据名称加载声音文件，将生成的Sound对象和Channel对象保存在字典中"""
+        try :
+            path = self.files_path[name]
+            # 加载文件
+            sound = pygame.mixer.Sound(path)
+        except FileNotFoundError:
+            print(f"No file exists in the {path}!")
+        else:
+            if self.id < self.channels_number:
+                # 创建一个Channel对象，并为其分配一个id 
+                channel = pygame.mixer.Channel(self.id)
+                # 将生成的sound和channel对象保存在字典中
+                self.sc_dictionary[name] = (sound, channel)
+                # 更新id
+                self.id += 1
+            else:
+                print("The id value of the channel exceeds the set maximum value!")
+                return None
+            
     def play(self, name, loops, volume):
-        """播放指定名称的音乐，并设置循环次数的音量"""
-        sound = self.sounds_dictionary.get(name)
-        if sound:
-            # 创建一个声音播放频道
-            id = self.channels_id.get(name)
-            channel = pygame.mixer.Channel(id)
-            # 设置音量
-            channel.set_volume(volume)
-            # 播放音乐
-            channel.play(sound, loops)
-            return channel
-          
+        """播放name对应的声音文件，loop表示循环的次数-1为无限循环，volume为音量"""
+        
+        # 如果字典中没有保存该键值对，说明还文件没有加载
+        if not self.sc_dictionary.get(name):
+             self._load_file(name)
+        
+        # 从字典中取出Sound和Channel组成的元组
+        sc_tuple = self.sc_dictionary[name]
+        # 获得Sound对象
+        sound = sc_tuple[0]
+        # 获得Channel对象
+        channel = sc_tuple[1]
+
+        # 设置音量
+        channel.set_volume(volume)
+        # 播放音乐
+        channel.play(sound, loops)
+       
+        return channel
+                
     def stop(self):
         """停止播放音乐"""
         pygame.mixer.stop()
         pygame.mixer.music.stop()
 
-    def play_multiple_sounds(self, soundnames, loops):
-        """加入要播放的下一个声音"""
+    def _play_sounds(self, soundnames, loops):
+        """连续播放多个声音文件，每个文件都会按照设定的循环次数播放，然后自动播放下一个"""
         for name in soundnames:
+            # 加载文件
             pygame.mixer.music.load(self.files_path[name])
+            # 取得文件在列表中对应的索引值
             index = soundnames.index(name)
+            # 取得播放该文件的循环次数
             loop = loops[index]
-            print(loop)
+            # 播放文件
             pygame.mixer.music.play(loop, 0.5, 1)
-            while not loop == - 1 and pygame.mixer.music.get_busy():
+            # 一直等待文件播放完毕，然后播放下一个文件
+            # （如果不使用多线程，这里会影响主进程的运行）
+            while pygame.mixer.music.get_busy():
                 pass
+
+    def play_multiple_sounds(self, soundnames, loops):
+        """在一个单独的线程中播放soundnames中保存的多个声音文件，
+        这样可以避免对游戏主进程的干扰"""
+        # 创建一个单独线程，负责连续播放多个文件
+        t = Thread(target=self._play_sounds, args=(soundnames, loops))
+        # 启动该线程
+        t.start()
 
     def set_volume(self, name, volume):
         """调节指定音乐的音量"""
         music = self.sounds_dictionary.get(name)
         if music:
            music.set_volume(volume) 
+
+    def fadeout(self, delay):
+        """让正在播放的背景音乐逐渐延迟消失, delay以毫秒为单位"""
+        pygame.mixer.music.fadeout(delay)

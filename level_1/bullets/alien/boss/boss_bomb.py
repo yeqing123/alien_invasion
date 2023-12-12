@@ -12,7 +12,7 @@ class BossBomb(Sprite):
         self.screen = ai_game.screen
         self.drop_speed = 4.5
 
-        self.image = pygame.image.load('level_1/images/nzd5 (2).png')
+        self.image = pygame.image.load('images/bullets/nzd5 (2).png')
         self.rect = self.image.get_rect()
 
         self._set_position(position)

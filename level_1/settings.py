@@ -19,13 +19,15 @@ class Settings:
         self.speedup_scale = 1.1
         # 以什么尺度提高得分
         self.score_scale = 1.5
+        # 背景图片的移动速度
+        self.bg_speed = 1.0
 
         self.initialize_dynamic_settings()
 
     def initialize_dynamic_settings(self):
         """初始化游戏的动态设置"""
         # 设置飞船及其子弹移动速度
-        self.bullet_allow = 3
+        self.ship_bullet_allow = 3
         self.ship_speed = 2.5
         self.ship_bullet_speed = 5.5
 
@@ -46,7 +48,7 @@ class Settings:
         self.ship_speed *= self.speedup_scale
         self.ship_bullet_speed *= self.speedup_scale
         # 增加飞船发射子弹的限额
-        self.bullet_allow += 1
+        self.ship_bullet_allow += 1
         # 提升外星人及其子弹的移动速度
         self.alien_speed *= self.speedup_scale
         self.alien_bullet_speed *= self.speedup_scale

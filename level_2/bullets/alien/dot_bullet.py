@@ -15,6 +15,8 @@ class DotBullet(Sprite):
         self.shooter = shooter
         # 创建一个圆点子弹
         self.image = pygame.image.load("images/bullets/dot_bullet.png")
+         # 对图片进行优化处理
+        self.image = self.image.convert_alpha()
         self.rect = self.image.get_rect()
         
         # 设置子弹的正确位置

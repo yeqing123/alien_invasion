@@ -13,6 +13,7 @@ class RotatingBullet(Sprite):
 
         # 加载名为“four_pointed_star.png”的图片
         self.image = pygame.image.load("images/bullets/four_pointed_star.png")
+        self.image = self.image.convert_alpha()
         self.rect = self.image.get_rect()
 
         # 初始化子弹的位置
@@ -82,6 +83,7 @@ class RotatingBullet(Sprite):
         """让四角星子弹自转"""
         # 重新加载图片
         self.image = pygame.image.load("images/bullets/four_pointed_star.png")
+        self.image = self.image.convert_alpha()
         # 旋转图片
         self.image = pygame.transform.rotate(self.image, self.angle)
         # 以图像的中心点为旋转轴心

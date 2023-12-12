@@ -17,6 +17,8 @@ class Alien_2(Sprite):
 
         # 加载外星人及其爆炸的图像并设置其rect属性
         self.image = pygame.image.load("images/aliens/alien_2.png")
+         # 对图片进行优化处理
+        self.image = self.image.convert_alpha()
         self.rect = self.image.get_rect()
 
         # 每个外星人都从屏幕上边缘随机出现

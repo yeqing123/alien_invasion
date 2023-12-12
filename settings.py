@@ -9,7 +9,6 @@ class Settings:
         self.screen_width = 720
         self.screen_height = 1000
         self.bg_color = (230, 230, 230)
-        self.bg_speed = 1.0
 
         # 设置备用飞船数量
         self.ship_limit = 3  

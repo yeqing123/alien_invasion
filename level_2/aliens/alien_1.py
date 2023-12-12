@@ -16,6 +16,8 @@ class Alien_1(Sprite):
         self.screen_rect = ai_game.screen_rect
 
         self.image = pygame.image.load('images/aliens/alien_1.png')
+         # 对图片进行优化处理
+        self.image = self.image.convert_alpha()
         self.rect = self.image.get_rect()
 
         # 外星人的x坐标位置为随机值

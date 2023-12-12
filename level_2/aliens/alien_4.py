@@ -24,10 +24,9 @@ class Alien_4(Sprite):
 
         # 加载外星人飞机图像
         self.image = pygame.image.load('images/aliens/JpPlane.bmp')
+        # 对图片进行优化处理
+        self.image = self.image.convert_alpha()
         self.rect = self.image.get_rect()
-        # 加载高亮显示的图像
-        self.hl_image = pygame.image.load('images/aliens/HL_JpPlane.bmp')
-        self.hl_rect = self.hl_image.get_rect()
 
         # 设置外星人的初始位置
         self.rect.centerx = self.screen_rect.width / 4
@@ -143,6 +142,8 @@ class Alien_4(Sprite):
                 self.hight_light = False
             else:
                 self.image = pygame.image.load('images/aliens/JpPlane.bmp')
+            
+            self.image = self.image.convert_alpha()
             # 旋转图像
             self.image = pygame.transform.rotate(self.image, angle)
             # 以图像中心点为轴心旋转

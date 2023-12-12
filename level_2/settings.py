@@ -11,6 +11,8 @@ class Settings:
         
         # 以什么尺度来提高每个外星人分值        
         self.score_scale =  1.5
+        # 背景图片的移动速度
+        self.bg_speed = 1.0
 
         self.initialize_dynamic_settings()
 

@@ -16,6 +16,7 @@ class FireBall(Sprite):
         self.screen = self.ai_game.screen
 
         self.image = pygame.image.load("images/bullets/fire_ball.png")
+        self.image = self.image.convert_alpha()
         self.rect = self.image.get_rect()
 
         # 设置子弹的初始位置
@@ -37,12 +38,12 @@ class FireBall(Sprite):
 
     def fire_ball_burst(self):
         """火球炸裂变成16个分散的小子弹"""
-        # 当火球向下移动了120个像素距离后，就要炸裂
+        # 当火球向下移动了150个像素后，就要炸裂成16个向四面散开的散弹
         if self.move_distance >= 150:
             # 播放声音效果
-            #self.ai_game.player.play('launch_shotgun', 0, 1)
+            self.ai_game.player.play('launch_shotgun', 0, 1)
             # 因为炸裂后火球就要消失，所以要从编组中删除火球
-            self.shooter.shotguns.remove(self)
+            self.shooter.bullets.remove(self)
             
             # 创建16个小散弹
             self.number = 1
@@ -53,7 +54,7 @@ class FireBall(Sprite):
                 # 因为每个散弹的移动方向不同，所以要初始化它们的飞行路线
                 new_bullet.initialize_flight_path()
                 # 加入编组
-                self.shooter.shotguns.add(new_bullet)
+                self.shooter.bullets.add(new_bullet)
                 self.number += 1
             
             # 重置移动距离

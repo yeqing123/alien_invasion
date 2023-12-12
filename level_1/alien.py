@@ -15,7 +15,7 @@ class Alien(Sprite):
         self.ai_game = ai_game
 
         # 加载外星人及其爆炸的图像并设置其rect属性
-        self.image = pygame.image.load("level_1/images/processed_image.png")
+        self.image = pygame.image.load("images/aliens/alien_2.png")
         self.rect = self.image.get_rect()
 
         # 每个外星人最初都在屏幕的左上角附近

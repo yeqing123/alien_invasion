@@ -12,6 +12,8 @@ class ShipRocket(Sprite):
         self.flight_speed = 4.5
 
         self.image = pygame.image.load('images/rocket.png')
+         # 对图片进行优化处理
+        self.image = self.image.convert_alpha()
         self.rect = self.image.get_rect()
         self.rect.center = self.ship.rect.center
 

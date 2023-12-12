@@ -10,8 +10,9 @@ class Scoreboard:
         self.screen = ai_game.screen
         self.screen_rect = self.screen.get_rect()
         self.stats = ai_game.stats
-        self.settings = ai_game.settings
+        self.settings = ai_game.main.settings
 
+        # 保存预备飞船的编组
         self.ships = pygame.sprite.Group()
         # 设置显示得分的字体
         self.font = pygame.font.SysFont(None, 48)
@@ -60,7 +61,8 @@ class Scoreboard:
 
     def prep_ships(self):
         """显示余下多少艘飞船"""
-        # 将所有余下的飞船存放在编组中
+        self.ships.empty()
+        # 根据游戏状态创建预备飞船，并将其存放在编组中
         for ship_number in range(self.stats.ship_left):
             ship = Ship(self.ai_game)
             ship.rect.top = 10
