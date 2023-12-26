@@ -1,5 +1,6 @@
 import pygame
 
+from random import randint
 
 from supply_packages.basic_package import BasicPackage
 
@@ -13,13 +14,16 @@ class MissilePackage(BasicPackage):
 
         # 加载补给包的显示图像
         self.image = pygame.image.load("images/supply_packages/rocket_package.png")
+        self.image = self.image.convert_alpha()
         self.rect = self.image.get_rect()
 
-        # 初始化补给包的位置
-        self.rect.midbottom = self.screen_rect.midtop
-    
+         # 初始化补给包的位置
+        self.rect.x = randint(0, self.screen_rect.width - self.rect.width)
+        self.rect.y = -1 * self.rect.height
+
         self.x = float(self.rect.x)
         self.y = float(self.rect.y)
+    
         # 设置补给包的类型
         self.type = "missile"
 

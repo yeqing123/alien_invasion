@@ -12,7 +12,14 @@ class AlienBomb(Sprite):
         self.screen = ai_game.screen
         self.drop_speed = 4.5
 
-        self.image = pygame.image.load('images/bullets/nzd5 (2).png')
+        # 先从缓存中提取，如果缓存中没有再加载文件
+        self.image = ai_game.image_cacha.get('alien_bomb')
+        if not self.image:
+            # 加载文件
+            self.image = pygame.image.load('images/bullets/nzd5 (2).png')
+            # 存入缓存
+            ai_game.image_cacha['alien_bomb'] = self.image
+
          # 对图片进行优化处理
         self.image = self.image.convert_alpha()
         self.rect = self.image.get_rect()

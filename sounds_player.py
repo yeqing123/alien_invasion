@@ -9,17 +9,16 @@ class SoundsPlayer:
         """初始化相关的属性"""
         pygame.init()
         pygame.mixer.init()
-        self.channels_number = 20
+        # 默认的频道数量为8
+        self.channels_number = 8
         self.id = 0
-        pygame.mixer.set_num_channels(self.channels_number)
 
         # 获取每一关将要播放的声音文件的路径
         self.files_path = sounds_path
         
-        # 以name为键，以Sound和Channel组成的元组为值，将加载文件后生成的对象保存在字典中
-        self.sc_dictionary = {}
+        # 音频缓存（以name为键，以Sound和Channel组成的元组为值）
+        self.sounds_cacha = {}
         
-
     def _load_file(self, name):
         """根据名称加载声音文件，将生成的Sound对象和Channel对象保存在字典中"""
         try :
@@ -33,22 +32,23 @@ class SoundsPlayer:
                 # 创建一个Channel对象，并为其分配一个id 
                 channel = pygame.mixer.Channel(self.id)
                 # 将生成的sound和channel对象保存在字典中
-                self.sc_dictionary[name] = (sound, channel)
+                self.sounds_cacha[name] = (sound, channel)
                 # 更新id
                 self.id += 1
-            else:
-                print("The id value of the channel exceeds the set maximum value!")
-                return None
+            else:  # 如果频道已用完，就重新进行扩展
+                self.channels_number += 8
+                pygame.mixer.set_num_channels(self.channels_number)
+                self._load_file(name)
             
     def play(self, name, loops, volume):
         """播放name对应的声音文件，loop表示循环的次数-1为无限循环，volume为音量"""
         
         # 如果字典中没有保存该键值对，说明还文件没有加载
-        if not self.sc_dictionary.get(name):
+        if not self.sounds_cacha.get(name):
              self._load_file(name)
         
         # 从字典中取出Sound和Channel组成的元组
-        sc_tuple = self.sc_dictionary[name]
+        sc_tuple = self.sounds_cacha[name]
         # 获得Sound对象
         sound = sc_tuple[0]
         # 获得Channel对象
@@ -99,3 +99,4 @@ class SoundsPlayer:
     def fadeout(self, delay):
         """让正在播放的背景音乐逐渐延迟消失, delay以毫秒为单位"""
         pygame.mixer.music.fadeout(delay)
+        pygame.mixer.fadeout(delay)

@@ -19,15 +19,15 @@ class Settings:
     def initialize_dynamic_settings(self):
         """初始化游戏的动态设置"""
         # 设置飞船及其子弹移动速度
-        self.ship_bullet_allow = 5
+        self.ship_bullet_allow = 3
         self.ship_speed = 3.5
         self.ship_bullet_speed = 6.5
 
         # 设置外星人及其子弹移动速度
-        self.alien_bullet_speed = 1.5
-        self.boss_bullet_speed = 3.5
-        self.alien_speed = 1.0
-        self.alien_bullet_allow = 5
+        self.alien_bullet_speed = 5.5
+        self.boss_bullet_speed = 5.5
+        self.alien_speed = 2.0
+        self.alien_bullet_allow = 4
         
         # 设置外星人移动的方向，1表示向右，-1表示向左
         self.alien_direction = 1
@@ -39,5 +39,3 @@ class Settings:
         print("提升游戏难度！")
         if self.ship_bullet_allow < 10:
             self.ship_bullet_allow += 1
-
-        self.alien_bullet_allow += 1

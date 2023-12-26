@@ -17,30 +17,11 @@ class BasicPackage(ABC, Sprite):
         self.screen_rect = self.screen.get_rect()
         self.settings = ai_game.main.settings
 
-        # 初始化补给包的移动距离(最小50个像素，最大为屏幕宽度)
-        self.remove_distance = randint(50, self.screen_rect.width)
-
     def update(self):
         """更新补给包的移动位置"""
-        # 先检测是否到达屏幕两侧边缘
-        self._check_edge()
         # 更新位置
-        self.x += self.settings.sp_speed * self.settings.sp_direction
         self.y += self.settings.sp_speed
-        self.rect.x = self.x
         self.rect.y = self.y
-        
-        # 更新需要移动的距离
-        self.remove_distance -= self.settings.sp_speed
-        #当距离缩小到小于或等于0时，重新获取一个新的值
-        if self.remove_distance <= 0:
-            self.remove_distance = randint(50, self.settings.screen_width)
-
-    def _check_edge(self):
-        """检查补给包是否移动到了屏幕的边缘"""
-        # 当补给包触碰到屏幕两侧边缘时，改变其移动方向
-        if self.rect.left <= 0 or self.rect.right >= self.screen_rect.right:
-            self.settings.sp_direction *= -1
 
     def blitme(self):
         """在屏幕上绘制补给包图像"""

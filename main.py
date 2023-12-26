@@ -14,20 +14,22 @@ class Alien_invasion:
 
     def __init__(self):
         """初始化主程序所需的各类属性"""    
-        pygame.init()
-        self.settings = Settings()
-        # 创建游戏窗口
+        pygame.init()    
+        self.settings = Settings()  
+        # 创建游戏窗口，为了提高游戏运行速度使用双缓冲技术
         self.screen = pygame.display.set_mode(
-            (self.settings.screen_width, self.settings.screen_height))
+            (self.settings.screen_width, self.settings.screen_height), 
+            pygame.DOUBLEBUF)
+        
         self.screen_rect = self.screen.get_rect()
         pygame.display.set_caption("Alien Invasion")  
 
         # 创建游戏开始界面的背景图像
         self.begin_image = GameBeginBackground(self)
         
-        # 创建游戏按钮
-        self.start_button = Button(self, '开始')
-        # 创建管理游戏状态的类
+        # 创建游戏按钮    
+        self.start_button = Button(self, '开始')   
+          # 创建管理游戏状态的类
         self.stats = GameStats(self) 
         
     def _check_events(self): 

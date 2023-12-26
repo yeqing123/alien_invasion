@@ -21,6 +21,13 @@ class SmallBullet(Sprite):
         # 设置子弹移动的速度
         self.y_speed = 3.5
 
+    def initialize_position(self, x_position, y_position):
+        """动态设置子弹的初始位置"""
+        self.rect.x = x_position
+        self.rect.y = y_position
+
+        self.y = float(self.rect.y)
+
     def update(self):
         """更新子弹的位置"""
         self.y += self.y_speed

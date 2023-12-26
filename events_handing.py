@@ -52,7 +52,7 @@ class EventsHanding:
         elif event.key == pygame.K_DOWN and self.stats.level >= 2:
             self.ship.moving_down = True
         elif event.key == pygame.K_SPACE:
-                self.ship.fire_bullet()
+                self.ship.launch_shotguns()
         elif event.key == pygame.K_q:
             self._close_game()
         

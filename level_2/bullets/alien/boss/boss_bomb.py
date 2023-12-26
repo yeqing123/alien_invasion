@@ -12,7 +12,14 @@ class BossBomb(Sprite):
         self.screen = ai_game.screen
         self.drop_speed = 4.5
 
-        self.image = pygame.image.load('level_1/images/nzd5 (2).png')
+        self.image = ai_game.image_cacha.get('boss_bomb')
+        if not self.image:
+            # 加载文件    
+            self.image = pygame.image.load('level_1/images/nzd5 (2).png')
+            # 存入缓存
+            ai_game.image_cacha['boss_bomb'] = self.image
+        
+        # 优化图像类型
         self.image = self.image.convert_alpha()
         self.rect = self.image.get_rect()
 

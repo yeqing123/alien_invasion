@@ -5,8 +5,9 @@ import threading
 from time import sleep
 from random import randint
 from apscheduler.schedulers.background import BackgroundScheduler
+from functools import lru_cache
 
-from ship import Ship
+from ship.ship import Ship
 from button import Button 
 from game_text import GameText
 from scoreboard import Scoreboard
@@ -14,6 +15,7 @@ from sounds_player import SoundsPlayer
 from explosion_effect import ExplosionEffect
 from events_handing import EventsHanding
 from supply_packages.missile_package import MissilePackage
+from supply_packages.shotguns_package import ShotGunsPackage
 from supply_packages.stealth_package import StealthPackage
 
 from level_2.settings import Settings
@@ -22,10 +24,20 @@ from level_2.game_bg_image import GameBgImage_2
 from level_2.aliens.alien_1 import Alien_1
 from level_2.aliens.alien_2 import Alien_2
 from level_2.aliens.alien_3 import Alien_3
-from level_2.aliens.alien_4 import Alien_4
 from level_2.aliens.alien_boss_2 import AlienBoss_2
-from level_2.bullets.ship.ship_missile import ShipMissile
+from ship.bullets.shotguns.shotgun_1 import Shotgun_1
+from ship.bullets.shotguns.shotgun_2 import Shotgun_2
+from ship.bullets.shotguns.shotgun_3 import Shotgun_3
+from ship.bullets.ship_missile import ShipMissile
+from ship.bullets.ship_rocket import ShipRocket
 from level_2.bullets.alien.boss.laser_beam import LaserBeam
+from level_2.bullets.alien.boss.rotating_bullet import RotatingBullet
+from level_2.bullets.alien.boss.shot_bullet import ShotBullet
+from level_2.bullets.alien.small_bullet import SmallBullet
+from level_2.bullets.alien.dot_bullet import DotBullet
+from level_2.bullets.alien.alien_bomb import AlienBomb
+from level_2.bullets.alien.smart_red_bullet import SmartRedBullet
+from level_2.bullets.alien.smart_green_bullet import SmartGreenBullet
 
 class Level_2:
     """管理游戏资源和行为的类"""
@@ -38,6 +50,15 @@ class Level_2:
         self.stats = main.stats
         self.screen_rect = main.screen_rect
 
+        # 定义游戏缓存（一个缓存中相同类型的对象都保存在一个列表中，
+        # 并有一个名称与之对应， 形成一个name-list形式的键值对）
+
+        # 创建不同类型的子弹缓存
+        self.idle_bullets_dic = {}
+        # 创建外星人缓存
+        self.idle_aliens_dic = {} 
+        # 创建图像的缓存
+        self.image_cacha = {}
 
         # 创建管理游戏第二关背景的实例
         self.bg_image = GameBgImage_2(self)
@@ -54,10 +75,13 @@ class Level_2:
 
         # 创建存放飞船的子弹的编组
         self.ship_bullets = pygame.sprite.Group()
+
         # 创建存放飞船补给包的编组
         self.packages = pygame.sprite.Group()
+
         # 创建存放外星人的编组
-        self.aliens = pygame.sprite.Group()  
+        self.aliens = pygame.sprite.Group()
+
         # 将Boss放入一个单独的编组中
         self.boss_group = pygame.sprite.Group()
         # 创建存放外星人子弹的编组
@@ -89,7 +113,6 @@ class Level_2:
         # 是否显示Boss
         self.boss_show = False
 
-
     def run_game(self):
         """开始游戏的主循环"""
         self.start_game()
@@ -111,6 +134,7 @@ class Level_2:
 
     def start_game(self):
         """游戏开始"""
+        self.packages.add(ShotGunsPackage(self))
         self.packages.add(StealthPackage(self))
 
         # 重置游戏开始的所有状态
@@ -123,10 +147,15 @@ class Level_2:
         # 重置有关设置
         self.settings.initialize_dynamic_settings()
     
-        # 清空外星人列表和子弹列表
+        # 清空外星人编组和子弹编组
         self.ship_bullets.empty()
         self.alien_bullets.empty()
         self.aliens.empty()
+
+        # 清空所有缓存
+        self.idle_aliens_dic.clear()
+        self.idle_bullets_dic.clear()
+        self.image_cacha.clear()
 
         # 重置Boss的有关属性
         self.boss_2.initialize_state()
@@ -146,9 +175,9 @@ class Level_2:
         self.game_active = True
         self.boss_show = False
 
-        # 添加一个任务，每隔15秒钟调用一次self._increase_difficulty()函数，提升游戏难度
+        # 添加一个任务，每隔30秒钟调用一次self._increase_difficulty()函数，提升游戏难度
         self.scheduler.add_job(
-            self._increase_difficulty, 'interval', seconds=15)
+            self._increase_difficulty, 'interval', id="diff", seconds=30)
        
     def _update_bullets(self):
         """更新屏幕上所有子弹的位置，并删除已飞出屏幕顶部的子弹"""
@@ -156,12 +185,16 @@ class Level_2:
         self.ship_bullets.update()
         self.alien_bullets.update()
         if self.boss_show:
-            self.boss_2.bullets.update()
+            self.boss_2.rotate_bullets.update()
+            self.boss_2.shotguns.update()
 
         # 如果子弹已经飞出了屏幕就将其删除
         for bullet in self.ship_bullets.sprites():
             if bullet.rect.bottom < 0: 
                 self.ship_bullets.remove(bullet)
+
+                # 将子弹对象存入缓存中，以便重复使用
+                self._save_idle_bullet(bullet)
 
         for bullet in self.alien_bullets.sprites():
             if bullet.rect.top > self.screen.get_rect().bottom or \
@@ -170,13 +203,33 @@ class Level_2:
                     bullet.rect.bottom < 0: 
                 self.alien_bullets.remove(bullet)
 
+                # 将4号外星人发射的SmallBullet对象保存在列表中，以便重复使用
+                if isinstance(bullet, SmallBullet):
+                    self.idle_bullets_dic['small_bullet'].append(bullet)
+
         if self.boss_show:
-            for bullet in self.boss_2.bullets.sprites():
+            # 删除飞出屏幕的旋转子弹
+            for bullet in self.boss_2.rotate_bullets.sprites():
                 if bullet.rect.top > self.screen.get_rect().bottom or \
                         bullet.rect.right > self.screen_rect.right or \
                         bullet.rect.left < 0 or \
                         bullet.rect.bottom < 0: 
-                    self.boss_2.bullets.remove(bullet)
+                    self.boss_2.rotate_bullets.remove(bullet)
+
+                    # 重复使用旋转子弹
+                    if isinstance(bullet, RotatingBullet):
+                        self.boss_2.idle_rotate_bullets.append(bullet)
+
+            # 删除飞出屏幕的散弹
+            for bullet in self.boss_2.shotguns.sprites():
+                if bullet.rect.top > self.screen.get_rect().bottom or \
+                        bullet.rect.right > self.screen_rect.right or \
+                        bullet.rect.left < 0 or \
+                        bullet.rect.bottom < 0: 
+                    self.boss_2.shotguns.remove(bullet)
+                    # 重复使用散弹
+                    if isinstance(bullet, ShotBullet):
+                        self.boss_2.idle_shotguns.append(bullet)
 
     def _check_package_ship_collisitions(self):
         """检测补给包与飞船发生碰撞，并做出响应"""
@@ -189,38 +242,72 @@ class Level_2:
             self.packages.remove(collided_package)
 
     def _create_alien_1(self):
-        """以随机的方式创建1号外星人"""
-        new_alien = Alien_1(self)
-        self.aliens.add(new_alien)
+        """创建一个1号外星人"""
+        # 如果字典中没有对应的列表，就创建一对key-value
+        if not self.idle_aliens_dic.get('alien_1'):
+            self.idle_aliens_dic['alien_1'] = []
+        
+        # 提取键’alien_1‘对应的列表
+        aliens_list = self.idle_aliens_dic.get('alien_1')
+        try:
+            # 从列表末尾弹出一个闲置的外星人对象
+            idle_alien = aliens_list.pop()
+            # 重置该对象的位置
+            idle_alien.initialize_position()
+            # 加入编组
+            self.aliens.add(idle_alien)
+        except IndexError:  # 如果列表为空，就创建一个新的对象
+            new_alien = Alien_1(self)
+            self.aliens.add(new_alien)
 
     def _create_alien_2(self):
         """创建一个2号外星人"""
-        new_alien = Alien_2(self)
-        self.aliens.add(new_alien)
+        # 如果字典中没有对应的列表，就创建一对key-value
+        if not self.idle_aliens_dic.get('alien_2'):
+            self.idle_aliens_dic['alien_2'] = []
+        
+        # 提取键’alien_2‘对应的列表
+        aliens_list = self.idle_aliens_dic.get('alien_2')
+        try:
+            # 从列表末尾弹出一个闲置的外星人对象
+            idle_alien = aliens_list.pop()
+            # 重置该对象的位置
+            idle_alien.initialize_position()
+            # 加入编组
+            self.aliens.add(idle_alien)
+        except IndexError:  # 如果列表为空，就创建一个新的对象
+            new_alien = Alien_2(self)
+            self.aliens.add(new_alien)
 
     def _create_alien_3(self):
         """以随机方式创造3号外星人"""
-        self.alien_3 = Alien_3(self)
-        self.aliens.add(self.alien_3)
+        # 如果字典中没有对应的列表，就创建一对key-value
+        if not self.idle_aliens_dic.get('alien_3'):
+            self.idle_aliens_dic['alien_3'] = []
+        
+        # 提取键’alien_3‘对应的列表
+        aliens_list = self.idle_aliens_dic.get('alien_3')
 
-    def _create_alien_4(self):
-        """创建4号外星人"""
-        self.alien_4 = Alien_4(self)
-        self.aliens.add(self.alien_4)
+        try:
+            # 从列表末尾弹出一个闲置的外星人对象
+            idle_alien = aliens_list.pop()
+            # 重置3号外星人的位置
+            idle_alien.initialize_position()
+            # 加入编组
+            self.aliens.add(idle_alien)
+        except IndexError:  # 如果列表为空，就创建一个新的对象
+            new_alien = Alien_3(self)
+            self.aliens.add(new_alien)
 
     def _create_all_aliens(self):
         """添加创建各类外星人的任务，负责创建所有的外星人"""
         # 定时创建外星人Alien_1
-        self.scheduler.add_job(self._create_alien_1, 'interval', seconds=2)
+        self.scheduler.add_job(self._create_alien_1, 'interval', id="create_1", 
+                               seconds=randint(1, 5))
         # 定时创建外星人Alien_2
-        self.scheduler.add_job(self._create_alien_2, 'interval', seconds=3)
-        # # # 定时创建外星人Alien_3
-        # if self.stats.difficulty == 2:
-        #     self.scheduler.add_job(self._create_alien_3, 'interval', seconds=8)
-        # 定时创建外星人Alien_4
-        #self.scheduler.add_job(self._create_alien_4, 'interval', seconds=10)
+        self.scheduler.add_job(self._create_alien_2, 'interval', id="create_2", 
+                               seconds=randint(1, 5))
     
-
     def _check_alien_bullet_collisions(self):
         """检查是否有飞船发射的子弹和外星人发生碰撞（即是否中了外星人），并做出响应"""
         # 获取一个以子弹为一个键，以与该子弹碰撞的所有外星人组成的列表为值的字典
@@ -228,46 +315,76 @@ class Level_2:
             self.ship_bullets, self.aliens, True, False, pygame.sprite.collide_mask)
         
         if collisions:
-            # 将每个被击落的外星人都得计入得分
-            for aliens in collisions.values():
-                for alien in aliens:
-                    self.stats.score += alien.alien_points
-                    self.sb.prep_score()
-                    self.sb.check_high_score()
-                    # 设置外星人被击中的效果
-                    self._alien_hit(alien)
+            # 处理所有击中外星人的子弹
+            for bullet, aliens in collisions.items():
+                # 将子弹对象存入缓存中，以便重复使用
+                self._save_idle_bullet(bullet)
+                
+                # 对被击中的外星人，进行相关操作
+                for aliens in collisions.values():
+                    for alien in aliens:
+                        self._alien_hit(bullet, alien)
 
+    def _save_idle_alien(self, alien):
+        """在游戏运行中将所有闲置的外星人对象存入缓存"""
+        if isinstance(alien, Alien_1):
+            self.idle_aliens_dic['alien_1'].append(alien)
+        elif isinstance(alien, Alien_2):
+            self.idle_aliens_dic['alien_2'].append(alien)
+        elif isinstance(alien, Alien_3):
+            self.idle_aliens_dic['alien_3'].append(alien)
+
+    def _save_idle_bullet(self, bullet):
+        """在游戏运行中将所有闲置的子弹对象存入缓存"""
+        if isinstance(bullet, SmallBullet):
+            self.idle_bullets_dic['small_bullet'].append(bullet)
+        elif isinstance(bullet, AlienBomb):
+            self.idle_bullets_dic['alien_bomb'].append(bullet)
+        elif isinstance(bullet, DotBullet):
+            self.idle_bullets_dic['dot_bullet'].append(bullet)
+        elif isinstance(bullet, SmartGreenBullet):
+            self.idle_bullets_dic['smart_green_bullet'].append(bullet)
+        elif isinstance(bullet, SmartRedBullet):
+            self.idle_bullets_dic['smart_red_bullet'].append(bullet)
+        elif isinstance(bullet, Shotgun_1):
+            self.idle_bullets_dic['shotgun_1'].append(bullet)
+        elif isinstance(bullet, Shotgun_2):
+            self.idle_bullets_dic['shotgun_2'].append(bullet)
+        elif isinstance(bullet, Shotgun_3):
+            self.idle_bullets_dic['shotgun_3'].append(bullet)
+        elif isinstance(bullet, ShipMissile):
+            self.idle_bullets_dic['ship_missile'].append(bullet)
+        elif isinstance(bullet, ShipRocket):
+            self.idle_bullets_dic['ship_rocket'].append(bullet)
+
+    @lru_cache()
     def _check_alien_gone(self):
         """检测已经飞出屏幕消失的外星人"""
         for alien in self.aliens.sprites():
-            # 普通外星人会在屏幕下方消失
+            # 将消失的外星人存入缓存    
             if alien.rect.y > self.screen_rect.height:
                 self.aliens.remove(alien)
+                self._save_idle_alien(alien)
 
-            elif isinstance(alien, Alien_4):  # 如果是4号外星人，它会消失在屏幕上方
-                if alien.reach_nadir and alien.rect.bottom < self.screen_rect.top:
-                    self.aliens.remove(alien)
-
-    def _alien_hit(self, alien):
+    def _alien_hit(self, bullet, alien):
         """创建一个外星人被击中的效果"""
-        # 如果是Alien_3或者Alien_4被击毁，并且它正在执行开火任务，则需要将该任务删除
-        if isinstance(alien, Alien_4) or isinstance(alien, Alien_3):
-            if alien.blood_volume > 0:
-                alien.blood_volume -= 1
-                alien.hight_light = True
-            else:
-                # 移除开火的任务
-                if self.scheduler.get_job(f"{id(alien)} open fire"):
-                    self.scheduler.remove_job(f"{id(alien)} open fire")
-                # 渲染爆炸效果
-                self.player.play('explode', 0, 1)
-                self.explosion.set_effect(alien.rect.x, alien.rect.y)
-                # 删除该外星人
-                self.aliens.remove(alien)
-        else:
-            self.player.play('explode', 0, 1)
-            self.explosion.set_effect(alien.rect.x, alien.rect.y)
+        # 渲染爆炸效果
+        self.player.play('explode', 0, 1)
+        self.explosion.set_effect(alien.rect.x, alien.rect.y)
+
+        if alien.blood_volume > 0:
+            # 根据飞船子弹的杀伤力，缩减外星人血量
+            alien.blood_volume -= bullet.lethality
+        else:  
+            # 记录得分
+            self.stats.score += alien.alien_points
+            # 写入状态面板
+            self.sb.prep_score()
+            # 检测是否超过历史最高分
+            self.sb.check_high_score()
+            # 将被击毁的外星人存入缓存
             self.aliens.remove(alien)
+            self._save_idle_alien(alien)
 
     def _increase_difficulty(self):
         """增加游戏难度，并依据条件增加Boss"""
@@ -275,27 +392,29 @@ class Level_2:
         self.stats.difficulty += 1
         self.settings.increase_speed()
 
-        # if self.stats.difficulty == 1:
-        #     # 定时创建外星人Alien_1
-        #     self.scheduler.add_job(self._create_alien_1, 'interval', seconds=2)
-        #     # 定时创建外星人Alien_2
-        #     self.scheduler.add_job(self._create_alien_2, 'interval', seconds=3)
-        # 当水平提升到5时，Boss出现。同时创建一个补给包，强化飞船火力
         if self.stats.difficulty == 2:
-            self.scheduler.add_job(self._create_alien_3, 'interval', seconds=8)
-        if self.stats.difficulty == 5:
-            self.scheduler.add_job(self._create_alien_4, 'interval', seconds=15)
-        # if self.stats.difficulty == 7:
+            self.scheduler.add_job(self._create_alien_3, 'interval', 
+                                   id="create_3", seconds=randint(1, 5))
+      
+        # 当水平提升到5时，Boss出现。同时创建一个补给包，强化飞船火力
+        if self.stats.difficulty == 3:
 
-        #     # Boss登场
-        #     self.boss_show = True
-        #     pygame.mixer.fadeout(2000)
-        #     self.player.play_multiple_sounds(
-        #         ['boss_2_apear', 'great_war_boss_2'], [1, -1])
+            # Boss登场
+            self.boss_show = True
+            pygame.mixer.fadeout(2000)
+            self.player.play('boss_2_apear', -1, 1)
            
             # 创建补给包
             self.missile_package = MissilePackage(self)
             self.packages.add(self.missile_package)
+
+            # boss出现有游戏难度不在提升
+            self.scheduler.remove_job(job_id="diff")
+            self.scheduler.remove_job(job_id="create_1")
+            self.scheduler.remove_job(job_id="create_2")
+            self.scheduler.remove_job(job_id="create_3")
+
+            self.idle_aliens_dic.clear()
 
     def _set_boss_explosions_range(self):
         """根据Boss所在位置，获得其连续爆炸的随机位置"""
@@ -324,18 +443,29 @@ class Level_2:
             self.boss_2.high_light = True
             self.boss_2.boss_high_light()
             self.ship_bullets.remove(collied_any)
+
+            # 将子弹对象存入缓存，以便重复使用
+            self._save_idle_bullet(collied_any)
+
             # 每次Boss被击中都会掉血
-            self.boss_2.blood_volume -= 1
+            self.boss_2.blood_volume -= collied_any.lethality
+            print(self.boss_2.blood_volume)
         
             # 如果Boss的血量已耗尽，则渲染其爆炸的效果
-            if self.boss_2.blood_volume == 0:
+            if self.boss_2.blood_volume <= 0:
                 # 设置连续爆炸的次数
                 self.number = 10
                 # 设置连续爆炸位置区间
                 self._set_boss_explosions_range()
                 # 创建连续爆炸效果
                 self._boss_end()
-                
+                # 记录得分
+                self.stats.score += self.boss_2.boss_points
+                # 写入状态面板
+                self.sb.prep_score()
+                # 检测是否超过历史最高分
+                self.sb.check_high_score()
+    
     def _boss_end(self):
         """以递归方式设置多线程定时器，制造Boss的连续爆炸效果"""
         # 如果number小于等于0，则制造最后的一次大爆炸效果，然后结束递归
@@ -354,6 +484,7 @@ class Level_2:
             self.player.play('victory', -1, 1)
             # 显示鼠标
             pygame.mouse.set_visible(True)  
+            self.boss_show = False
             return
     
         # 每递归一次，number就减1
@@ -378,13 +509,12 @@ class Level_2:
             self.boss_2.rect.x + 50, self.boss_2.rect.y + 30, 1000)
         # 播放爆炸音效
         self.player.play('boss_explode', 0, 1)
-        self.boss_show = False
 
         # 设定在3.1秒后恢复默认的爆炸效果（3.1秒正好是10次连续爆炸持续时间的总和多一点点）
         threading.Timer(3.1, self.explosion.reset).start()
 
     def _check_ship_hit(self):
-        """检查飞船是否被击中（与外星人发生碰撞或有外星人到达屏幕底部），并做出响应"""
+        """检查飞船是否被击中或与外星人发生碰撞，并做出响应"""
         if not self.ship_destroy:
             # 获取与飞船发生碰撞的子弹
             collided_bullet = pygame.sprite.spritecollideany(
@@ -396,7 +526,7 @@ class Level_2:
             
             # 检测飞船是否与Boss发生了碰撞
             if pygame.sprite.spritecollide(self.ship, self.boss_group, False,
-                                            pygame.sprite.collide_mask):
+                        pygame.sprite.collide_mask) and self.boss_show:
                 self._ship_destroyed()
             
             # 当飞船与子弹碰撞时，做出相应的操作
@@ -404,9 +534,14 @@ class Level_2:
                 self.alien_bullets.remove(collided_bullet)
                 self._ship_destroyed() 
 
+                 # 将4号外星人发射的SmallBullet对象保存在列表中，以便重复使用
+                if isinstance(collided_bullet, SmallBullet):
+                    self.idle_bullets_dic['small_bullet'].append(collided_bullet)
+
             # 当飞船与外星人碰撞时，做出相应的操作
             if collided_alien:
                 self.aliens.remove(collided_alien)
+                self._save_idle_alien(collided_alien)
                 self._ship_destroyed()
 
             # 如果Boss已经出现，则检测飞船是否被Boss发射的子弹击中
@@ -416,14 +551,31 @@ class Level_2:
     def _check_boss_bullet_hits_ship(self):
         """检查Boss的子弹命中飞船"""
         # 检测与飞船发生碰撞的Boss子弹
-        collided_bullets = pygame.sprite.spritecollideany(
-            self.ship, self.boss_2.bullets, pygame.sprite.collide_mask)
+        collided_bullet = pygame.sprite.spritecollideany(
+            self.ship, self.boss_2.rotate_bullets, pygame.sprite.collide_mask)
         
-        # 当飞船与子弹碰撞时，做出相应的操作
-        if collided_bullets:
-            # 如果击中飞船的是激光束，则激光束不会消失
-            if not isinstance(collided_bullets, LaserBeam):
-                self.boss_2.bullets.remove(collided_bullets)
+        collided_shotgun = pygame.sprite.spritecollideany(
+            self.ship, self.boss_2.shotguns, pygame.sprite.collide_mask)
+        
+        # 当飞船被旋转子弹击中时
+        if collided_bullet:
+            # 如果击中飞船的是激光束，则激光束不会立马消失
+            if not isinstance(collided_bullet, LaserBeam):
+                self.boss_2.rotate_bullets.remove(collided_bullet)
+                # 不是激光束的就一定是旋转子弹
+                self.boss_2.idle_rotate_bullets.append(collided_bullet)
+
+            # 渲染飞船爆炸的效果
+            self._ship_destroyed()
+
+        # 当飞船被散弹或火球击中时
+        if collided_shotgun:
+            self.boss_2.shotguns.remove(collided_shotgun)
+            # 重复使用散弹（火球不需要重复使用）
+            if isinstance(collided_shotgun, ShotBullet):
+                self.boss_2.idle_shotguns.append(collided_shotgun)
+            
+            # 渲染飞船爆炸的效果
             self._ship_destroyed()
 
     def _ship_destroyed(self):
@@ -435,7 +587,7 @@ class Level_2:
         self.explosion.set_effect(self.ship.rect.x, self.ship.rect.y)
         # 设置多线程，倒计时三秒后将调用self._ship_hit()方法
         threading.Timer(3, self._ship_hit).start()
-      
+
     def _ship_hit(self):
         """当飞船被击中时，做出相应的响应"""
         # 如果还有备用飞船，重新开始，否则结束游戏
@@ -450,8 +602,10 @@ class Level_2:
             self.ship_bullets.empty()
             self.alien_bullets.empty()
             
+            # 清空boss的所有子弹
             if self.boss_show:  
-                self.boss_2.bullets.empty()
+                self.boss_2.rotate_bullets.empty()
+                self.boss_2.shotguns.empty()
 
             # 因为已经创建了一个飞船实例，因此启动备用飞船并不是真的要在创建一个实例，
             # 我们只需将现有的飞船居中即可。   
@@ -470,22 +624,11 @@ class Level_2:
             self.player.stop()
             self.player.play('game_over', 0, 1)
             # 显示鼠标
-            pygame.mouse.set_visible(True)  
-
-    def _alien_fire_bullet(self):
-        """外星人发射子弹"""
-        if len(self.aliens) > 0:
-            # 屏幕上的子弹最多不超过设置中限定的数量
-            while len(self.alien_bullets) < self.settings.alien_bullet_allow:
-                index = random.randint(0, len(self.aliens) - 1)
-                alien = self.aliens.sprites()[index]
-                if not isinstance(alien, Alien_4):
-                    alien.fire_bullet()
+            pygame.mouse.set_visible(True) 
 
     def _update_aliens(self):
         """更新所有外星人的位置，并对其相关事件做出响应"""
-        self.aliens.update()  
-        self._alien_fire_bullet()
+        self.aliens.update()
         self._check_alien_bullet_collisions()
         self._check_alien_gone()
         if self.boss_show:
@@ -499,32 +642,42 @@ class Level_2:
         self.packages.update()
         # 检测补给包是否与飞船发生碰撞
         self._check_package_ship_collisitions()
-        # 删除已经消失的补给包
-        for package in self.packages.sprites().copy():
-            if package.rect.top > self.screen_rect.bottom:
-                self.packages.remove(package)
 
     def _update_screen(self):
         """更新屏幕上的图像"""
+        # 绘制背景图像
         self.bg_image.blitme()
+
+        # 绘制外星人图像
         self.aliens.draw(self.screen)
+        # 绘制所有子弹的图像
         self.ship_bullets.draw(self.screen)
+        # 绘制飞船的图像
         if not self.ship_destroy:
             self.ship.blitme()
+
+        # 绘制外星人发射的子弹
         for bullet in self.alien_bullets.sprites():
             bullet.draw_bullet()
-      
+
+        # 绘制Boss及其子弹的图像
         if self.boss_show:
             self.boss_2.update_screen()
 
+        # 绘制爆炸效果的图像
         self.explosion.blitme()
+        # 绘制补给包的图像
         self.packages.draw(self.screen)
+
+        # 绘制游戏状态栏中的图像
         self.sb.ships.draw(self.screen)
         self.sb.show_score()
 
+        # 如果玩家取得胜利，则绘制“胜利”的文本图像和“继续”按钮
         if self.victory:
             self.game_text.show_victory_text()
             self.continue_button.draw_button()
+        # 如果玩家失败，则绘制“失败”的文本图像和“重新开始”按钮
         if self.game_over:
             self.game_text.show_game_over_text()
             self.restart_button.draw_button()

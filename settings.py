@@ -19,9 +19,9 @@ class Settings:
         self.event_order = 0
 
         # 设置补给包的移动速度
-        self.sp_speed = 1.5
-        # 设置补给包移动的方向
-        self.sp_direction = 1
+        self.sp_speed = 1.0
+        # 设置补给包持续时间(默认为10秒钟)
+        self.sp_time = 20
 
     def get_custom_events(self):
         """创建一个新的自定义事件"""

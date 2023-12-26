@@ -12,8 +12,16 @@ class OrdinaryBullet(Sprite):
         self.screen = ai_game.screen
         self.flight_speed = 3.5
 
-        self.image = pygame.image.load('level_1/images/1_17.png')
+        # 先从缓存中提取
+        self.image = ai_game.image_cacha.get('ordinary_bullet')
+        if not self.image:
+            # 加载文件
+            self.image = pygame.image.load('level_1/images/1_17.png')
+            ai_game.image_cacha['ordinary_bullet'] = self.image
+
+        # 对图像进行优化处理
         self.image = self.image.convert_alpha()
+        
         self.rect = self.image.get_rect()
 
         self._set_position(position)

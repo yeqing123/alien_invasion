@@ -20,17 +20,22 @@ class Alien_4(Sprite):
         super().__init__()
         self.settings = ai_game.settings
         self.ai_game = ai_game
+        self.screen = ai_game.screen
         self.screen_rect = ai_game.screen_rect
 
-        # 加载外星人飞机图像
-        self.image = pygame.image.load('images/aliens/JpPlane.bmp')
+        # 先从图像缓存提取，如果缓存中没有再加载文件
+        self.image = ai_game.image_cacha.get('alien_4')
+        if not self.image:
+            # 加载外星人飞机图像
+            self.image = pygame.image.load('images/aliens/JpPlane.bmp')
+            ai_game.image_cacha['alien_4'] = self.image
+
         # 对图片进行优化处理
         self.image = self.image.convert_alpha()
         self.rect = self.image.get_rect()
 
         # 设置外星人的初始位置
-        self.rect.centerx = self.screen_rect.width / 4
-        self.rect.y = -2 * self.rect.height
+        self.initialize_position()
 
         # 设置该外星人在y轴上飞行的最低点
         self.y_nadir = self.screen_rect.height / 2
@@ -45,13 +50,9 @@ class Alien_4(Sprite):
         self.step_number= self.down_moving_speed / self.reduce_scale
         # 设置一个保存次数的备用变量
         self.spare_number = self.step_number
-
-        # 为了便于精确计算，将其rect的中心点坐标设置为浮点数类型
-        self.x = float(self.rect.centerx)
-        self.y = float(self.rect.centery)
-
+        
          # 设置该外星人的分值
-        self.alien_points = 3
+        self.alien_points = 6
 
         # 设置是否已到达指定的最低点
         self.reach_nadir = False
@@ -62,14 +63,24 @@ class Alien_4(Sprite):
         # 设置外星人左右扫射时的移动方向(1标识向右，-1标识向左)
         self.strafe_direction = 1
 
-        # 设置血量
-        self.blood_volume = 10
-
         # 设置是否高亮显示
         self.hight_light = False
 
         # 是否已经投弹
         self.drop_bomb = False
+
+        # 保存Alien_4对象已经创建目前闲置的SmallBullet对象
+        self.idle_bullets = []
+
+    def initialize_position(self):
+        """初始化外星人位置"""
+        self.rect.centerx = self.screen_rect.width / 4
+        self.rect.y = -2 * self.rect.height
+
+        self.x = float(self.rect.centerx)
+        self.y = float(self.rect.centery)
+        # 设置血量
+        self.blood_volume = 50
 
     def _start_strafe(self):
         """将APScheduler任务调度器中添加开火的任务"""
@@ -86,14 +97,25 @@ class Alien_4(Sprite):
         # 设置左右两颗子弹的x坐标位置
         left_x = self.rect.x + self.rect.width / 4
         right_x = self.rect.x + (self.rect.width / 4) * 3
+
+        # 如果缓存中没有对应的键值对，就创建一个
+        if not self.ai_game.idle_bullets_dic.get('small_bullet'):
+            self.ai_game.idle_bullets_dic['small_bullet'] = []
+
+        try:
+            # 从列表末尾弹出一个闲置的两个SmallBullet对象
+            left_bullet = self.ai_game.idle_bullets_dic['small_bullet'].pop()
+            right_bullet = self.ai_game.idle_bullets_dic['small_bullet'].pop()
+            # 重置左右两个SmallBullet对象的位置
+            left_bullet.initialize_position(left_x, self.rect.bottom)
+            right_bullet.initialize_position(right_x, self.rect.bottom)
+        except IndexError:  # 如果列表为空，就创建两个新的对象
+            left_bullet = SmallBullet(self.ai_game, left_x, self.rect.bottom)
+            right_bullet = SmallBullet(self.ai_game, right_x, self.rect.bottom)
         
-        # 创建子弹，并设置其初始化位置
-        left_small_bullet = SmallBullet(self.ai_game, left_x, self.rect.bottom)
-        right_small_bullet = SmallBullet(self.ai_game, right_x, self.rect.bottom)
-        
-        # 加入子弹编组中
-        self.ai_game.alien_bullets.add(left_small_bullet)
-        self.ai_game.alien_bullets.add(right_small_bullet)
+        # 加入编组
+        self.ai_game.alien_bullets.add(left_bullet)
+        self.ai_game.alien_bullets.add(right_bullet)
         
         self.ai_game.player.play("small_bullet", 0, 0.5)
         
@@ -206,4 +228,8 @@ class Alien_4(Sprite):
         
         # 更新并旋转飞机图像
         self._rotate_alien()
+
+    def blitme(self):
+        """将外星人的图像绘制在屏幕上"""
+        self.screen.blit(self.image, self.rect)
         

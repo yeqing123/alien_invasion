@@ -1,6 +1,7 @@
 import pygame
 
 from pygame.sprite import Sprite
+from functools import lru_cache
 
 class RotatingBullet(Sprite):
     """旋转的四角星子弹"""
@@ -11,26 +12,38 @@ class RotatingBullet(Sprite):
         self.ai_game = ai_game
         self.shooter = shooter
 
-        # 加载名为“four_pointed_star.png”的图片
-        self.image = pygame.image.load("images/bullets/four_pointed_star.png")
+        self.image = ai_game.image_cacha.get('rotate_bullet')
+        if not self.image:
+            # 加载文件
+            self.image = pygame.image.load("images/bullets/four_pointed_star.png")
+            # 存入缓存中
+            ai_game.image_cacha['rotate_bullet'] = self.image
+    
+        # 图像优化处理
         self.image = self.image.convert_alpha()
+        
         self.rect = self.image.get_rect()
 
         # 初始化子弹的位置
-        self.rect.x = self.shooter.rect.x + 111
-        self.rect.y = self.shooter.rect.y + 70
+        self.initialize_position()
 
         # 设置子弹的移动速度
         self.speed = 5.5
-        # 因为图像是以中心点为轴心旋转的，所以要以centery来计算图像的移动
-        self.centerx = float(self.rect.centerx)
-        self.centery = float(self.rect.centery)
         
         # 设置自转角度
         self.angle = 0.0
 
-          # 为每个子弹标记一个序号（默认为1）
+        # 为每个子弹标记一个序号（默认为1）
         self.id = 1
+
+    def initialize_position(self):
+        """动态设置子弹的初始位置"""
+        self.rect.x = self.shooter.rect.x + 111
+        self.rect.y = self.shooter.rect.y + 70
+       
+        # 因为图像是以中心点为轴心旋转的，所以要以centery来计算图像的移动
+        self.centerx = float(self.rect.centerx)
+        self.centery = float(self.rect.centery)
 
     def set_id(self, id):
         """设置每个散弹的id为一个正整数"""
@@ -81,8 +94,8 @@ class RotatingBullet(Sprite):
 
     def _rotate_itself(self):
         """让四角星子弹自转"""
-        # 重新加载图片
-        self.image = pygame.image.load("images/bullets/four_pointed_star.png")
+        # 直接从缓存中提取图像
+        self.image = self.ai_game.image_cacha.get('rotate_bullet')
         self.image = self.image.convert_alpha()
         # 旋转图片
         self.image = pygame.transform.rotate(self.image, self.angle)

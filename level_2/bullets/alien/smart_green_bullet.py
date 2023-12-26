@@ -21,11 +21,18 @@ class SmartGreenBullet(Sprite):
             self.settings.alien_bullet_radius
             )
         # 设置子弹的正确位置
-        self.rect.center = self.shooter.rect.midbottom
+        self.initialize_position(self.shooter)
 
         # 根据飞船当前的位置，计算子弹的飞行轨迹
         self._calculate_flight_path()
 
+
+    def initialize_position(self, shooter):
+        """动态设置子弹的初始位置"""
+        # 更新发射者的位置
+        self.shooter = shooter
+
+        self.rect.center = self.shooter.rect.center
         # 存储用浮点数表示的子弹位置
         self.x = float(self.rect.centerx)
         self.y = float(self.rect.centery)

@@ -9,8 +9,14 @@ class ExplosionEffect:
         self.settings = ai_game.main.settings
         self.screen = ai_game.screen
 
-        # 加载图片文件
-        self.image = pygame.image.load("images/another/Progear_FireExplosions.png")
+        self.image = ai_game.image_cacha.get('explosion_effect')
+        if not self.image:
+            # 加载图片文件
+            self.image = pygame.image.load("images/another/Progear_FireExplosions.png")
+            # 加入缓存
+            ai_game.image_cacha['explosion_effect'] = self.image
+            
+        self.image = self.image.convert_alpha()
         self.rect = self.image.get_rect()
         # 设置是否显示的标识
         self.show_image = False

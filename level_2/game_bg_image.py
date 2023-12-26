@@ -5,6 +5,7 @@ class GameBgImage_2:
 
     def __init__(self, ai_game):
         """初始化所需的各项属性"""
+        self.ai_game = ai_game
         self.settings = ai_game.settings
         self.screen = ai_game.screen
         self.screen_rect = self.screen.get_rect()

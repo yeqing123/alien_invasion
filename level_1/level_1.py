@@ -6,7 +6,7 @@ from time import sleep
 from random import randint
 from apscheduler.schedulers.background import BackgroundScheduler
 
-from ship import Ship
+from ship.ship import Ship
 from button import Button 
 from game_text import GameText
 from scoreboard import Scoreboard
@@ -33,6 +33,10 @@ class Level_1:
         self.stats = main.stats
         self.screen = main.screen
         self.screen_rect = main.screen_rect
+        # 图像缓存
+        self.image_cacha = {}
+        # 子弹缓存
+        self.idle_bullets_dic = {}
 
         # 创建第一关的背景图像
         self.bg_image = GameBgImage_1(self)
@@ -66,6 +70,7 @@ class Level_1:
         self.ship = Ship(self)
         # 创建Boss，并加入编组
         self.boss_1 = AlienBoss_1(self)
+
 
         # 创建检测并处理事件的类
         self.events_handing = EventsHanding(self)

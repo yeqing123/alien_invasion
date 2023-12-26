@@ -1,6 +1,5 @@
 import pygame
 
-from pygame.sprite import Group
 from pygame.sprite import Sprite
 from level_2.bullets.alien.boss.shot_bullet import ShotBullet
 
@@ -15,7 +14,13 @@ class FireBall(Sprite):
         self.ai_game = shooter.ai_game
         self.screen = self.ai_game.screen
 
-        self.image = pygame.image.load("images/bullets/fire_ball.png")
+        # 先从缓存中提取
+        self.image = self.ai_game.image_cacha.get('fire_ball')
+        if not self.image:
+            self.image = pygame.image.load("images/bullets/fire_ball.png")
+            # 存入缓存中
+            self.ai_game.image_cacha['fire_ball'] = self.image
+
         self.image = self.image.convert_alpha()
         self.rect = self.image.get_rect()
 
@@ -28,8 +33,6 @@ class FireBall(Sprite):
 
         self.y = float(self.rect.y)
 
-        # 存放散弹的编组
-        self.shotguns = Group()
         # 设置散弹的序号（默认从1开始）
         self.number = 1
 
@@ -40,21 +43,26 @@ class FireBall(Sprite):
         """火球炸裂变成16个分散的小子弹"""
         # 当火球向下移动了150个像素后，就要炸裂成16个向四面散开的散弹
         if self.move_distance >= 150:
-            # 播放声音效果
-            self.ai_game.player.play('launch_shotgun', 0, 1)
             # 因为炸裂后火球就要消失，所以要从编组中删除火球
-            self.shooter.bullets.remove(self)
+            self.shooter.shotguns.remove(self)
             
             # 创建16个小散弹
             self.number = 1
             while(self.number < 17):
-                new_bullet = ShotBullet(self.ai_game, self)
-                # 为每个散弹设置一个id
-                new_bullet.set_id(self.number)
-                # 因为每个散弹的移动方向不同，所以要初始化它们的飞行路线
-                new_bullet.initialize_flight_path()
+                try:
+                    # 从列表末尾弹出一个闲置的ShotBullet对象
+                    shotgun = self.shooter.idle_shotguns.pop()
+                    # 重置该散弹的初始位置
+                    shotgun.initialize_position(self)
+                except IndexError:  # 如果列表为空，就创建一个新的对象
+                    shotgun = ShotBullet(self.ai_game, self)
+            
+                # 为散弹设置id值
+                shotgun.set_id(self.number)
+                # 初始化它的飞行路线
+                shotgun.initialize_flight_path()
                 # 加入编组
-                self.shooter.bullets.add(new_bullet)
+                self.shooter.shotguns.add(shotgun)
                 self.number += 1
             
             # 重置移动距离

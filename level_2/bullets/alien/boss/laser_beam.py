@@ -10,8 +10,16 @@ class LaserBeam(Sprite):
         self.ai_game = ai_game
         self.shooter = shooter
 
-        # 加载显示激光束的图片
-        self.image = pygame.image.load("images/bullets/laser_beam.bmp")
+        self.image = ai_game.image_cacha.get('laser_beam')
+        if not self.image:
+            # 加载显示激光束的图片
+            self.image = pygame.image.load("images/bullets/laser_beam.bmp")
+            # 加入缓存中
+            ai_game.image_cacha['laser_beam'] = self.image
+
+        # 优化图像
+        self.image = self.image.convert_alpha()
+        
         self.rect = self.image.get_rect()
 
         self.initialize_position()

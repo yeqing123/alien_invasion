@@ -3,6 +3,7 @@ import pygame
 from pygame.sprite import Group
 from pygame.sprite import Sprite
 from time import sleep
+from functools import lru_cache
 
 from level_2.bullets.alien.boss.fire_ball import FireBall
 from level_2.bullets.alien.boss.laser_beam import LaserBeam
@@ -31,9 +32,15 @@ class AlienBoss_2(Sprite):
         self.rect = self.image.get_rect()
         self.high_rect = self.high_image.get_rect()
 
-        # 存放Boss发射的所有子弹（包括激光束和散弹）的编组
-        self.bullets = Group()
-        # 存放散弹的编组
+        # 存放Boss发射的旋转子弹和激光束的编组
+        self.rotate_bullets = Group()
+        # 存放Boss发射的散弹的编组
+        self.shotguns = Group()
+
+        # 存放Boss的闲置的旋转子弹对象
+        self.idle_rotate_bullets = []
+        # 存放Boss闲置的散弹(包括FireBall对象)
+        self.idle_shotguns = []
 
         # 设置与运动有关的属性
         self.boss_speed = 1.0
@@ -43,6 +50,9 @@ class AlienBoss_2(Sprite):
 
         self.initialize_state()
 
+        # 设置要发射的旋转子弹的id
+        self.id_list = [4, 3, 2, 1, 16, 15, 14]
+
     def initialize_state(self):
         """初始化Boss的有关状态"""
         # 重置初始位置
@@ -50,11 +60,17 @@ class AlienBoss_2(Sprite):
         self.x = float(self.rect.x)
         self.y = float(self.rect.y)
 
-        # 清空子弹编组
-        self.bullets.empty()
+        # 清空子弹编组和存放闲置子弹的列表
+        self.rotate_bullets.empty()
+        self.shotguns.empty()
+        self.idle_rotate_bullets.clear()
+        self.idle_shotguns.clear()
       
         # 定义Boss的血量
-        self.blood_volume = 100
+        self.blood_volume = 700
+        # 定义分值
+        self.boss_points = 20
+
         # 设置游戏运行过程中Boss的一些状态标识
         self.high_light = False
         self.allow_fire = False
@@ -69,13 +85,24 @@ class AlienBoss_2(Sprite):
             self._boss_appearing()
         elif not self.allow_fire: # 如果还没有允许射击，则设置为允许开火
             self.allow_fire = True
+
             # 向任务调度器中添加Boss的投弹任务，每三秒开火一次，每十秒俯冲投弹一次
             self.scheduler.add_job(
-                self._launch_fire_ball, 'interval', seconds=5, max_instances=10)
-            self.scheduler.add_job(self._launch_laser_beam, 'interval', seconds=10, max_instances=10)
-            self.scheduler.add_job(self._launch_rotating_bullet, 'interval', seconds=10)
+                self._launch_fire_ball, 'interval', seconds=5, max_instances=15)
         else:     # 如果以上情况都不是，则左右运动
             self._move_left_and_right()
+        
+        # 当Boss的血量减到一定程度时，增强Boss的火力
+        if self.blood_volume <= 200 and not self.scheduler.get_job("laser"):
+            print("添加激光束任务")
+            self.scheduler.add_job(self._launch_laser_beam, 'interval', 
+                                id="laser", seconds=15, max_instances=10)
+        
+        if self.blood_volume <= 100 and not self.scheduler.get_job("rotate_bullet"):
+            print("添加旋转子弹任务")
+            self.scheduler.add_job(self._launch_rotating_bullet, 
+                        'interval', id="rotate_bullet", seconds=15, args=[0])
+            
 
         # 检测火球是否需要炸裂
         if self.fire_ball:
@@ -98,26 +125,30 @@ class AlienBoss_2(Sprite):
             self.rect.right >= self.screen_rect.right - 100):
 
             self.settings.boss_direction *= -1
-
-    def _launch_rotating_bullet(self):
+    
+    def _launch_rotating_bullet(self, index):
         """发射旋转子弹"""
-        number = 4
-        while(number > 0):
+        # 如果索引值到达列表末尾，就结束递归
+        if index == len(self.id_list) - 1:
+            return
+        try:
+            # 从列表末尾弹出一个闲置的RotatingBullet对象
+            idle_bullet = self.idle_rotate_bullets.pop()
+            # 重置该对象的位置
+            idle_bullet.initialize_position()
+            # 加入编组
+            self.rotate_bullets.add(idle_bullet)
+        except IndexError:  # 如果列表为空，就创建一个新的对象
             new_bullet = RotatingBullet(self.ai_game, self)
-            new_bullet.set_id(number)
+            id = self.id_list[index]
+            new_bullet.set_id(id)
             new_bullet.initialize_flight_path()
-            self.bullets.add(new_bullet)
-            number -= 1
-            sleep(1)
-
-        number = 16
-        while(number > 13):
-            new_bullet = RotatingBullet(self.ai_game, self)
-            new_bullet.set_id(number)
-            new_bullet.initialize_flight_path()
-            self.bullets.add(new_bullet)
-            number -= 1
-            sleep(1)
+            self.rotate_bullets.add(new_bullet)
+        
+        index += 1    
+        sleep(1)
+        # 每个一秒就递归一次
+        self._launch_rotating_bullet(index)
 
     def _launch_laser_beam(self):
         """发射激光束"""
@@ -130,16 +161,16 @@ class AlienBoss_2(Sprite):
         # 重置位置
         self.laser_beam.initialize_position()
         # 将激光束实例加入编组
-        self.bullets.add(self.laser_beam)
+        self.rotate_bullets.add(self.laser_beam)
         # 激光束持续3秒
         sleep(3)
-        self.bullets.remove(self.laser_beam)
+        self.rotate_bullets.remove(self.laser_beam)
 
     def _launch_fire_ball(self):
         """发射火球子弹"""
         # 先从Boss口中发射一颗火球状子弹
         self.fire_ball = FireBall(self)
-        self.bullets.add(self.fire_ball)
+        self.shotguns.add(self.fire_ball)
 
     def boss_high_light(self):
         """让Boss图片高亮，以表示它被击中了一次"""
@@ -157,6 +188,7 @@ class AlienBoss_2(Sprite):
             self.screen.blit(self.image, self.rect)
 
     def update_screen(self):
-        """更新有关Boss2及其子弹的图像"""
+        """绘制Boss2及其子弹的图像"""
         self.blitme()
-        self.bullets.draw(self.screen)
+        self.rotate_bullets.draw(self.screen)
+        self.shotguns.draw(self.screen)

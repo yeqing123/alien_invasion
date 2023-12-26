@@ -12,20 +12,35 @@ class ShotBullet(Sprite):
         self.settings = ai_game.settings
         self.ai_game = ai_game
         self.shooter = shooter
-        # 创建一个圆点子弹
-        self.image = pygame.image.load("images/bullets/dot_bullet.png")
+
+        self.image = ai_game.image_cacha.get('shot_bullet')
+        if not self.image:
+            # 创建一个圆点子弹
+            self.image = pygame.image.load("images/bullets/dot_bullet.png")
+            # 加入缓存中
+            ai_game.image_cacha['shot_bullet'] = self.image
+    
+        # 图像优化处理
         self.image = self.image.convert_alpha()
+        
         self.rect = self.image.get_rect()
         
         # 设置子弹的正确位置
+        self.initialize_position(shooter)
+
+        # 为每个子弹标记一个序号（默认为1）
+        self.id = 1
+
+    def initialize_position(self, shooter):
+        """动态设置该子弹的初始位置"""
+        # 更新散弹的起始位置
+        self.shooter = shooter
         self.rect.center = self.shooter.rect.center
 
         # 存储用浮点数表示的子弹位置
         self.x = float(self.rect.centerx)
         self.y = float(self.rect.centery)
 
-        # 为每个子弹标记一个序号（默认为1）
-        self.id = 1
 
     def set_id(self, id):
         """设置每个散弹的id为一个正整数"""

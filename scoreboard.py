@@ -1,5 +1,5 @@
 import pygame
-from ship import Ship
+from ship.ship import Ship
 
 class Scoreboard:
     """显示得分信息的类"""
